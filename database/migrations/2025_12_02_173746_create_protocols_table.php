@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('protocols', function (Blueprint $table) {
             $table->id();
-            $table->enum('role', ['patient', 'therapist'])->default('patient');
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->string('locale')->default('en');
-            $table->string('timezone', 100)->default('WIB');
+            $table->foreignId('therapist_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
+            $table->string('title');
+            $table->text('description');
             $table->timestamps();
         });
     }
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('protocols');
     }
 };
