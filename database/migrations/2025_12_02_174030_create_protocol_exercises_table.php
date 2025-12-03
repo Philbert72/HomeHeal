@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('protocol_id')->constrained('protocols')->onDelete('cascade');
             $table->foreignId('exercise_id')->constrained('exercises')->onDelete('cascade');
 
-            $table->int('sets');
-            $table->int('reps');
+            $table->integer('sets');
+            $table->integer('reps');
             $table->decimal('resistance_amount', 8, 2)->nullable();
             $table->smallInteger('rest_amount');
             $table->primary(['protocol_id', 'exercise_id']);
