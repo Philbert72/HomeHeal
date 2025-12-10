@@ -27,3 +27,7 @@ Route::post('/register', function () {
 Route::get('/sessions/create', function () {
     return view('sessions.create');
 })->name('sessions.create');
+
+Route::get('/protocols', function () {
+    return view('protocols.index');
+})->name('protocols.index');
