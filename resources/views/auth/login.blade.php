@@ -12,7 +12,8 @@
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-            <form class="space-y-5" action="#" method="POST">
+            <!-- CRITICAL FIX: Update action to the login.store route -->
+            <form class="space-y-5" action="{{ route('login.store') }}" method="POST">
                 @csrf
 
                 <div>
@@ -27,7 +28,8 @@
 
                 <div class="flex items-center justify-between pt-2">
                     <div class="flex items-center gap-2">
-                        <input id="remember-me" name="remember-me" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                        <!-- CRITICAL FIX: name should be 'remember' for Laravel Auth -->
+                        <input id="remember-me" name="remember" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                         <label for="remember-me" class="text-sm text-slate-600">Remember me</label>
                     </div>
                     <a href="#" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition">Forgot password?</a>
