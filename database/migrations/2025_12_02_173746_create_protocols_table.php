@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('therapist_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
