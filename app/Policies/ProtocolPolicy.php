@@ -28,7 +28,7 @@ class ProtocolPolicy
 
         // 2. Patients can view protocols they are linked to (requires querying the pivot).
         if ($user->role === 'patient') {
-            return true;
+            return $protocol->patients()->where('user_id', $user->id)->exists();
         }
 
         return false;

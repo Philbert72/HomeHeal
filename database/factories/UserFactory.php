@@ -2,43 +2,49 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected $model = User::class;
 
     /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
+     * Define the model's default state (Patient).
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'name' => $this->faker->firstName() . ' ' . $this->faker->lastName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'password' => Hash::make('password'), // default password: 'password'
+            'role' => 'patient', // Default role for safety
+            'locale' => $this->faker->randomElement(['en', 'es', 'fr']),
+            'timezone' => $this->faker->timezone(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * State: User is a Therapist.
      */
-    public function unverified(): static
+    public function therapist(): Factory
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'name' => 'Dr. ' . $this->faker->lastName(),
+            'role' => 'therapist',
+        ]);
+    }
+
+    /**
+     * State: User is explicitly a Patient.
+     */
+    public function patient(): Factory
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'patient',
         ]);
     }
 }
