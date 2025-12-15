@@ -5,7 +5,7 @@ use App\Http\Controllers\ProtocolController;
 use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
-// --- 1. UNAUTHENTICATED ROUTES (Access BEFORE Login) ---
+// UNAUTHENTICATED ROUTES (Access BEFORE Login)
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,7 +28,7 @@ Route::get('/login', function () {
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 
 
-// --- 2. AUTHENTICATED APPLICATION ROUTES (Access AFTER Login) ---
+// AUTHENTICATED APPLICATION ROUTES (Access AFTER Login)
 
 Route::middleware(['auth'])->group(function () {
 

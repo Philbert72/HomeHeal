@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Livewire\ProtocolIndex;
 use App\Livewire\TherapistDashboard;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -51,5 +52,6 @@ class AppServiceProvider extends ServiceProvider
         // Maps the component tag <livewire:patient-dashboard /> to the PHP class
         Livewire::component('patient-dashboard', PatientDashboard::class);
         Livewire::component('therapist-dashboard', TherapistDashboard::class);
+        Livewire::component('protocol-index', ProtocolIndex::class);
     }
 }

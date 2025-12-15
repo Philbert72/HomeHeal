@@ -3,71 +3,144 @@
 namespace App\Http\Controllers;
 
 use App\Models\Protocol;
+use App\Models\Exercise; 
+use App\Traits\ConvertsUnits; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // <--- MANDATORY IMPORT
-use Illuminate\Routing\Controller; // Ensure we extend the base Controller
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-class ProtocolController extends Controller // Make sure you extend Controller, not just BaseController
+class ProtocolController extends Controller
 {
-    // Use the trait to gain access to the $this->authorize() method
-    use AuthorizesRequests;
+    // Uses traits for unit conversion and policy authorization
+    use ConvertsUnits, AuthorizesRequests;
 
     /**
-     * Store a newly created resource in storage. (Handles POST /protocols)
+     * Display a listing of the resource (Therapist View).
+     */
+    public function index()
+    {
+        // Policy check: Only therapists can view all protocols
+        $this->authorize('viewAny', Protocol::class);
+
+        // Fetch protocols created by the currently authenticated therapist
+        $protocols = Auth::user()->createdProtocols()->with('exercises')->paginate(10);
+
+        return view('protocols.index', compact('protocols'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        // Policy check: Only therapists can create protocols
+        $this->authorize('create', Protocol::class);
+
+        // Fetch all exercises to populate the dropdown/selector on the form
+        $exercises = Exercise::all();
+
+        return view('protocols.create', compact('exercises'));
+    }
+
+    /**
+     * Store a newly created resource in storage (CRUCIAL STEP FOR UNIT CONVERSION).
      */
     public function store(Request $request)
     {
-        // 1. AUTHORIZATION CHECK: This calls ProtocolPolicy@create
         $this->authorize('create', Protocol::class);
 
-        // 2. Validation (Minimal for testing)
+        // 1. Validation for Protocol and Exercises
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'exercises' => 'required|array|min:1',
+            'exercises.*.exercise_id' => ['required', 'exists:exercises,id'],
+            'exercises.*.sets' => 'required|integer|min:1',
+            'exercises.*.reps' => 'required|integer|min:1',
+            // Resistance is optional, but if present, units must be valid
+            'exercises.*.resistance_value' => 'nullable|numeric|min:0',
+            'exercises.*.resistance_unit' => [
+                'required_with:exercises.*.resistance_value', 
+                Rule::in(['g', 'kg', 'lb', 'm', 'ft', 'cm'])
+            ],
         ]);
 
-        // 3. Creation
-        $protocol = Protocol::create([
-            'therapist_id' => Auth::id(), // Assign current user (Therapist) as owner
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-        ]);
-        
-        // 4. Success Response: Redirect to the new protocol's page (HTTP 302)
-        return redirect()->route('protocols.show', $protocol);
+        // Start a transaction to ensure atomic saving of the protocol and its exercises
+        DB::transaction(function () use ($validated, $request) {
+            
+            // 2. Create the Protocol (linked to the therapist)
+            $protocol = Protocol::create([
+                'therapist_id' => Auth::id(),
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+            ]);
+
+            // 3. Attach Exercises and Convert Units
+            $pivotData = [];
+            foreach ($validated['exercises'] as $exerciseData) {
+                
+                $resistanceValue = $exerciseData['resistance_value'] ?? 0;
+                $resistanceUnit = $exerciseData['resistance_unit'] ?? 'g'; // Default to base unit
+
+                $baseUnitValue = 0;
+                if (in_array($resistanceUnit, ['lb', 'kg', 'g'])) {
+                    // Convert to Grams (base weight unit)
+                    $baseUnitValue = $this->getUnitConverter()->weightToGrams($resistanceValue, $resistanceUnit);
+                } elseif (in_array($resistanceUnit, ['ft', 'm', 'cm'])) {
+                    // Convert to Meters (base distance unit)
+                    $baseUnitValue = $this->getUnitConverter()->distanceToMeters($resistanceValue, $resistanceUnit);
+                }
+
+                $pivotData[$exerciseData['exercise_id']] = [
+                    'sets' => $exerciseData['sets'],
+                    'reps' => $exerciseData['reps'],
+                    
+                    // CRITICAL: Save the converted value into the 'resistance_amount' column
+                    'resistance_amount' => $baseUnitValue, 
+                    
+                    // Save the original unit for displaying back to the user
+                    'resistance_original_unit' => $resistanceUnit,
+
+                    // Default rest time
+                    'rest_seconds' => 60, 
+                ];
+            }
+
+            // 4. Attach exercises to the protocol
+            $protocol->exercises()->sync($pivotData);
+        });
+
+        return redirect()->route('protocols.index')->with('success', 'Protocol and associated exercises created successfully.');
     }
 
     /**
-     * Display the specified resource. (Handles GET /protocols/{protocol})
+     * Display the specified resource.
      */
     public function show(Protocol $protocol)
     {
-        // AUTHORIZATION CHECK: This calls ProtocolPolicy@view
+        // Policy check: Authorization handled here (e.g., patient can view assigned protocol, therapist can view created protocol)
         $this->authorize('view', $protocol);
 
-        // Success Response (HTTP 200) for passing the test
-        return response('Protocol View', 200); 
+        return view('protocols.show', compact('protocol'));
     }
 
-    /**
-     * Update the specified resource in storage. (Handles PUT /protocols/{protocol})
-     */
+    public function edit(Protocol $protocol)
+    {
+        $this->authorize('update', $protocol);
+        // Implementation goes here...
+    }
+
     public function update(Request $request, Protocol $protocol)
     {
-        // AUTHORIZATION CHECK: This calls ProtocolPolicy@update
         $this->authorize('update', $protocol);
-
-        // Validation (Minimal for testing)
-        $request->validate(['title' => 'required']); 
-        
-        // Update the model
-        $protocol->update($request->only('title', 'description'));
-
-        // Success Response: Redirect (HTTP 302)
-        return redirect()->route('protocols.show', $protocol);
+        // Implementation goes here...
     }
 
-    // Index, create, edit, and destroy methods are omitted for brevity but should be defined
-    // ...
+    public function destroy(Protocol $protocol)
+    {
+        $this->authorize('delete', $protocol);
+        // Implementation goes here...
+    }
 }

@@ -4,6 +4,8 @@
             <h1 class="text-4xl font-bold text-slate-900 mb-2">Therapist Management Hub</h1>
             <p class="text-slate-600">Welcome back, Dr. {{ $user->name ?? 'Therapist' }}. Here is an overview of your practice.</p>
         </div>
+        
+        <!-- Updated Link: Points to the index page, where the 'Create' button belongs -->
         <a href="{{ route('protocols.index') }}" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition">
             Manage Protocols
         </a>
@@ -27,9 +29,16 @@
 
     <!-- Protocols Management Overview -->
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div class="px-8 py-6 border-b border-slate-200">
-            <h2 class="text-xl font-bold text-slate-900">Your Protocols</h2>
-            <p class="text-slate-600 text-sm mt-1">Protocols you have designed and assigned to patients.</p>
+        <div class="px-8 py-6 border-b border-slate-200 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900">Your Protocols</h2>
+                <p class="text-slate-600 text-sm mt-1">Protocols you have designed and assigned to patients.</p>
+            </div>
+            
+            <!-- NEW ACTION BUTTON: Direct link to create a new protocol -->
+            <a href="{{ route('protocols.create') }}" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg shadow-sm transition text-sm">
+                + Create New Protocol
+            </a>
         </div>
         <div class="divide-y divide-slate-200">
             @forelse ($createdProtocols as $protocol)
@@ -40,12 +49,12 @@
                     </div>
                     <div class="flex items-center gap-4">
                         <span class="text-sm font-medium text-indigo-600">{{ $protocol->patients_count }} Patients</span>
-                        <a href="#" class="text-sm font-medium text-emerald-600 hover:text-emerald-800">View/Edit</a>
+                        <a href="{{ route('protocols.edit', $protocol) }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-800">View/Edit</a>
                     </div>
                 </div>
             @empty
                 <div class="px-8 py-6 text-slate-500 text-center">
-                    You have not created any protocols yet. Start managing your patients!
+                    You have not created any protocols yet. Use the button above to get started!
                 </div>
             @endforelse
         </div>

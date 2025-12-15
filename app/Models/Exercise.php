@@ -3,29 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Exercise extends Model implements HasMedia
+class Exercise extends Model 
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory; 
+
     protected $fillable = [
         'name',
         'instructions',
     ];
 
-    // One Exercise for many Protocol
-    public function protocols()
+    /**
+     * An Exercise belongs to many Protocols.
+     */
+    public function protocols(): BelongsToMany
     {
         return $this->belongsToMany(Protocol::class, 'protocol_exercise')
-                    ->withPivot(['sets', 'reps', 'resistance_amount', 'rest_seconds'])
-                    ->using(ProtocolExercise::class);
-    }
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('instructional_media')
-             ->singleFile(); // Ensures only one instructional file per exercise
+                    ->withPivot(['sets', 'reps', 'resistance_base_unit_value', 'resistance_original_unit'])
+                    ->withTimestamps();
     }
 }
