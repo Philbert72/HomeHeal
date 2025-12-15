@@ -2,15 +2,25 @@
 
 namespace App\Providers;
 
-use App\Models\DailySessionLog;
-use App\Policies\DailySessionLogPolicy;
-use App\Policies\ProtocolPolicy;
-use Illuminate\Support\Facades\Gate;
+use App\Livewire\TherapistDashboard;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Livewire;
+
+use App\Models\Protocol;
+use App\Models\DailySessionLog;
+use App\Policies\ProtocolPolicy;
+use App\Policies\DailySessionLogPolicy;
+
+use App\Livewire\PatientDashboard;
 
 class AppServiceProvider extends ServiceProvider
 {
-
+    /**
+     * The model to policy mappings for the application.
+     * Define them here if AuthServiceProvider is missing.
+     * Note: PHP resolves the fully qualified class names from the use statements above.
+     */
     protected $policies = [
         Protocol::class => ProtocolPolicy::class,
         DailySessionLog::class => DailySessionLogPolicy::class
@@ -29,20 +39,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Explicitly register policies via Gate::policy for reliability
         foreach ($this->policies as $model => $policy) {
-            // Get the Policy methods (e.g., 'view', 'create', 'update', 'delete')
-            $methods = get_class_methods($policy);
-
-            foreach ($methods as $method) {
-                // Skip constructor and other internal methods
-                if (in_array($method, ['__construct', 'before', 'after'])) {
-                    continue;
-                }
-
-                // Define the Gate: 'view-App\Models\Protocol'
-                // This is less common but a powerful way to define policies via Gates.
-                Gate::policy($model, $policy);
-            }
+            
+            // This is the clean, recommended way to register a policy
+            Gate::policy($model, $policy);
+            
         }
+        
+        // CRITICAL FIX: Register the PatientDashboard Livewire Component
+        // Maps the component tag <livewire:patient-dashboard /> to the PHP class
+        Livewire::component('patient-dashboard', PatientDashboard::class);
+        Livewire::component('therapist-dashboard', TherapistDashboard::class);
     }
 }
