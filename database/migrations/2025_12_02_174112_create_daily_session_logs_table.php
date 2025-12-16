@@ -11,17 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // 3. `daily_session_logs` table (Patient's daily compliance and recovery metrics)
         Schema::create('daily_session_logs', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
-
+            
+            // patient_id and protocol_id Foreign Keys
             $table->foreignId('patient_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('protocol_id')->constrained('protocols')->onDelete('cascade');
 
             $table->date('log_date');
-            $table->smallInteger('pain_score');
-            $table->smallInteger('difficulty_rating');
+            $table->tinyInteger('pain_score'); // 0-10
+            $table->tinyInteger('difficulty_rating'); // 1-5
             $table->text('notes')->nullable();
+            
+            $table->json('completed_exercises')->nullable(); 
+            
+            $table->unique(['patient_id', 'protocol_id', 'log_date']); 
+
+            $table->timestamps();
         });
     }
 

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProtocolController;
 use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\DailySessionLogController; // CRITICAL: New Import for Logging
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,17 +48,14 @@ Route::middleware(['auth'])->group(function () {
     })->name('logout');
 
 
-    // Sessions creation route
-    Route::get('/sessions/create', function () {
-        return view('sessions.create');
-    })->name('sessions.create');
+    // --- DAILY SESSION LOGGING ROUTES (NEW) ---
+    Route::resource('sessions', DailySessionLogController::class)->only(['create', 'store']);
+    
 
     // RESOURCE ROUTING FOR PROTOCOLS (Secure CRUD Endpoints)
     Route::resource('protocols', ProtocolController::class);
     
-    // --- PROTOCOL ASSIGNMENT ROUTES (FIXED) ---
-    // We apply the 'role' middleware to the individual routes here,
-    // ensuring both 'auth' and 'role:therapist' are required.
+    // --- PROTOCOL ASSIGNMENT ROUTES ---
     Route::prefix('protocols/{protocol}')->group(function () {
         
         // GET route for the assignment form

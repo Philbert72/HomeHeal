@@ -2,43 +2,51 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailySessionLog extends Model
 {
-    protected $table = 'daily_session_logs';
+    use HasFactory;
 
     protected $fillable = [
-        'patient_id',
+        'patient_id', 
         'protocol_id',
-        'log_date',
+        'log_date', // CRITICAL FIX: Added log_date to allow mass assignment
         'pain_score',
-        'difficulty_rating',
+        'difficulty_rating', 
         'notes',
+        'completed_exercises',
     ];
 
-    // Define the data types for casting
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
-        'log_date' => 'date',
+        'completed_exercises' => 'array',
         'pain_score' => 'integer',
         'difficulty_rating' => 'integer',
+        // Optional but recommended for date integrity:
+        'log_date' => 'date', 
     ];
 
-    // A session log belong to 1 patient
-    public function patient()
+    /**
+     * Get the user (patient) who created the log.
+     */
+    public function patient(): BelongsTo 
     {
-        return $this->belongsTo(User::class, 'patient_id');
+        // Specifying the foreign key 'patient_id'
+        return $this->belongsTo(User::class, 'patient_id'); 
     }
 
-    // A session log belong to 1 protocol
-    public function protocol()
+    /**
+     * Get the protocol the session was logged against.
+     */
+    public function protocol(): BelongsTo
     {
-        return $this->belongsTo(Protocol::class, 'protocol_id');
-    }
-
-    // Define the media collection for patient feedback videos/photos.
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('patient_feedback');
+        return $this->belongsTo(Protocol::class);
     }
 }
