@@ -111,9 +111,17 @@
                             Assigned: {{ optional($protocol->pivot)->created_at ? $protocol->pivot->created_at->diffForHumans() : 'N/A' }}
                         @endif
                     </span>
-                    <a href="{{ route('protocols.show', $protocol) }}" class="text-sm font-semibold {{ $buttonColor }} hover:underline">
-                        View Details →
-                    </a>
+                    <div class="flex items-center gap-4">
+                        <!-- Therapist Edit Link -->
+                        @if ($isTherapist)
+                            <a href="{{ route('protocols.edit', $protocol) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                        @endif
+                        
+                        <!-- All users can view details -->
+                        <a href="{{ route('protocols.show', $protocol) }}" class="text-sm font-semibold {{ $buttonColor }} hover:underline">
+                            View Details →
+                        </a>
+                    </div>
                 </div>
             </div>
         @empty
