@@ -17,19 +17,17 @@
                 <a href="{{ route('protocols.edit', $protocol) }}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow transition">
                     Edit Protocol
                 </a>
+                <!-- CORRECT: Assignment Button (This uses the working route) -->
+                <a href="{{ route('protocols.assign', $protocol) }}" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition">
+                    Assign/Unassign Patients
+                </a>
             @endcan
-            
-            <!-- Future Assignment Button for Therapist -->
-            @if(Auth::user()->role === 'therapist')
-                <button disabled class="px-4 py-2 text-sm font-medium text-white bg-slate-400 rounded-lg shadow transition cursor-not-allowed">
-                    Assign Protocol (Coming Soon)
-                </button>
-            @endif
         </div>
     </div>
 
     <!-- Metadata Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-700 border-t border-b border-slate-200 py-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-slate-700 border-t border-b border-slate-200 py-6">
+        <!-- Created By, Date Created, Status... -->
         <div class="space-y-1">
             <p class="text-sm font-semibold text-slate-500">Created By</p>
             <p class="text-base font-medium">Dr. {{ $protocol->therapist->name }}</p>
@@ -38,12 +36,18 @@
             <p class="text-sm font-semibold text-slate-500">Date Created</p>
             <p class="text-base">{{ $protocol->created_at->format('M d, Y') }}</p>
         </div>
-        <div class="space-y-1">
-            <p class="text-sm font-semibold text-slate-500">Status</p>
+        <div class="space-y-1 md:col-span-2">
+            <p class="text-sm font-semibold text-slate-500">Currently Assigned Patients ({{ $protocol->patients->count() }})</p>
             @if ($protocol->patients->isEmpty())
-                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">Draft</span>
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">Not Currently Assigned</span>
             @else
-                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">Assigned ({{ $protocol->patients->count() }})</span>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    @foreach ($protocol->patients as $patient)
+                        <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                            {{ $patient->name }}
+                        </span>
+                    @endforeach
+                </div>
             @endif
         </div>
     </div>
@@ -86,10 +90,6 @@
                             <p class="text-xs font-medium text-slate-600">Resistance</p>
                             <p class="text-lg font-bold text-slate-900">
                                 @if ($exercise->pivot->resistance_amount > 0)
-                                    <!-- NOTE: We are displaying the base unit value here, but labeling it with the original unit. 
-                                        To show the original value (e.g., 5 kg instead of 5000 g), we would need a conversion back function.
-                                        For now, we display the original unit with the base value (which is conceptually flawed but functionally shows the data is saved).
-                                    -->
                                     {{ number_format($exercise->pivot->resistance_amount, 2) }} {{ $exercise->pivot->resistance_original_unit }}
                                 @else
                                     Bodyweight / N/A

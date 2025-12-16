@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany; // CRITICAL IMPORT
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable, including new custom fields.
-     */
     protected $fillable = [
         'name',
         'email',
@@ -23,29 +21,15 @@ class User extends Authenticatable
         'locale',
         'timezone',
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     * This is CRITICAL for security.
-     */
     protected $hidden = [
         'password',
         // 'remember_token' is removed since the migration doesn't include it.
     ];
 
-    /**
-     * The attributes that should be cast.
-     * Only keeping the essential 'password' hashing cast.
-     */
     protected $casts = [
         'password' => 'hashed', // Ensures the password is automatically hashed upon creation/update
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships (Therapist/Patient perspective)
-    |--------------------------------------------------------------------------
-    */
 
     /**
      * A Therapist user can create many Protocols.
@@ -54,6 +38,23 @@ class User extends Authenticatable
     {
         // Links to the 'therapist_id' field on the protocols table
         return $this->hasMany(Protocol::class, 'therapist_id');
+    }
+
+    /**
+     * A Patient is assigned many Protocols.
+     */
+    public function assignedProtocols(): BelongsToMany
+    {
+        return $this->belongsToMany(Protocol::class, 'protocol_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Scope to return only users with the 'patient' role.
+     */
+    public function scopePatient(Builder $query): void
+    {
+        $query->where('role', 'patient');
     }
 
     /**
@@ -66,7 +67,6 @@ class User extends Authenticatable
     }
 
     /**
-     * FIX: Defines the Protocols assigned to a Patient via the protocol_user pivot table.
      * This relationship is used by the PatientDashboard component.
      */
     public function protocols(): BelongsToMany

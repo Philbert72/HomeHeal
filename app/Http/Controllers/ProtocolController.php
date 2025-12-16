@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Protocol;
 use App\Models\Exercise; 
+use App\Models\User; // CRITICAL: Required for assignment logic
 use App\Traits\ConvertsUnits; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,12 +21,8 @@ class ProtocolController extends Controller
      */
     public function index()
     {
-        // Policy check: Only therapists can view all protocols
         $this->authorize('viewAny', Protocol::class);
-
-        // Fetch protocols created by the currently authenticated therapist
         $protocols = Auth::user()->createdProtocols()->with('exercises')->paginate(10);
-
         return view('protocols.index', compact('protocols'));
     }
 
@@ -34,17 +31,13 @@ class ProtocolController extends Controller
      */
     public function create()
     {
-        // Policy check: Only therapists can create protocols
         $this->authorize('create', Protocol::class);
-
-        // Fetch all exercises to populate the dropdown/selector on the form
         $exercises = Exercise::all();
-
         return view('protocols.create', compact('exercises'));
     }
 
     /**
-     * Store a newly created resource in storage (CRUCIAL STEP FOR UNIT CONVERSION).
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
@@ -81,15 +74,24 @@ class ProtocolController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Protocol $protocol)
+    {
+        $this->authorize('view', $protocol);
+        // Ensure patients are loaded for assignment display
+        $protocol->load(['exercises', 'therapist', 'patients']); 
+        return view('protocols.show', compact('protocol'));
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Protocol $protocol)
     {
         $this->authorize('update', $protocol);
-
         $protocol->load('exercises');
         $exercises = Exercise::all();
-
         return view('protocols.edit', compact('protocol', 'exercises'));
     }
 
@@ -116,15 +118,12 @@ class ProtocolController extends Controller
 
         DB::transaction(function () use ($validated, $protocol) {
             
-            // 1. Update Protocol details
             $protocol->update([
                 'title' => $validated['title'],
                 'description' => $validated['description'],
             ]);
 
-            // 2. Prepare and sync exercises (pivot data)
             $pivotData = $this->preparePivotData($validated['exercises']);
-
             $protocol->exercises()->sync($pivotData);
         });
 
@@ -132,31 +131,59 @@ class ProtocolController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Protocol $protocol)
-    {
-        $this->authorize('view', $protocol);
-        $protocol->load(['exercises', 'therapist']);
-        return view('protocols.show', compact('protocol'));
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Protocol $protocol)
     {
-        // 1. Authorization: Ensure only the creator/authorized therapist can delete
         $this->authorize('delete', $protocol);
 
         $protocolTitle = $protocol->title;
-        
-        // 2. Deletion: Laravel deletes the protocol, and CASCADE deletes pivot records
         $protocol->delete();
 
-        // 3. Redirect with success message
         return redirect()->route('protocols.index')
                          ->with('success', 'Protocol "' . $protocolTitle . '" and all associated exercises were successfully deleted.');
+    }
+
+    // ----- ASSIGNMENT METHODS -----
+
+    /**
+     * Show the form/modal for assigning the protocol to patients.
+     */
+    public function assign(Protocol $protocol)
+    {
+        $this->authorize('update', $protocol); 
+
+        // Load all available patients and the patients currently assigned to this protocol
+        $allPatients = User::patient()->orderBy('name')->get();
+        $assignedPatientIds = $protocol->patients->pluck('id')->toArray();
+
+        return view('protocols.assign', compact('protocol', 'allPatients', 'assignedPatientIds'));
+    }
+
+    /**
+     * Handle the assignment update (syncing patients).
+     */
+    public function processAssignment(Request $request, Protocol $protocol)
+    {
+        $this->authorize('update', $protocol);
+
+        $validated = $request->validate([
+            // patients array is optional (allows unassigning everyone)
+            'patients' => 'nullable|array',
+            'patients.*' => ['exists:users,id', Rule::in(User::patient()->pluck('id'))],
+        ]);
+
+        $patientIds = $validated['patients'] ?? [];
+
+        // Sync the patient list to the protocol_user pivot table
+        $protocol->patients()->sync($patientIds);
+
+        $patientCount = count($patientIds);
+        $message = $patientCount > 0 
+                   ? "Protocol assigned successfully to $patientCount patient(s)." 
+                   : "All patients unassigned from the protocol.";
+
+        return redirect()->route('protocols.show', $protocol)->with('success', $message);
     }
     
     /**

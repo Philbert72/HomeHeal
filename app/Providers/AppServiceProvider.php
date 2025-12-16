@@ -2,11 +2,10 @@
 
 namespace App\Providers;
 
-use App\Livewire\ProtocolIndex;
-use App\Livewire\TherapistDashboard;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
-use Livewire\Livewire;
+use Livewire\Livewire; 
+use Illuminate\Routing\Router;
 
 use App\Models\Protocol;
 use App\Models\DailySessionLog;
@@ -14,13 +13,15 @@ use App\Policies\ProtocolPolicy;
 use App\Policies\DailySessionLogPolicy;
 
 use App\Livewire\PatientDashboard;
+use App\Livewire\TherapistDashboard;
+use App\Livewire\ProtocolIndex;
+
+use App\Http\Middleware\RoleMiddleware; 
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * The model to policy mappings for the application.
-     * Define them here if AuthServiceProvider is missing.
-     * Note: PHP resolves the fully qualified class names from the use statements above.
      */
     protected $policies = [
         Protocol::class => ProtocolPolicy::class,
@@ -38,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(Router $router): void // Inject Router
     {
         // Explicitly register policies via Gate::policy for reliability
         foreach ($this->policies as $model => $policy) {
@@ -48,8 +49,10 @@ class AppServiceProvider extends ServiceProvider
             
         }
         
-        // CRITICAL FIX: Register the PatientDashboard Livewire Component
-        // Maps the component tag <livewire:patient-dashboard /> to the PHP class
+        // CRITICAL FIX: Register the custom Role middleware alias directly here
+        $router->aliasMiddleware('role', RoleMiddleware::class);
+        
+        // Register Livewire Components
         Livewire::component('patient-dashboard', PatientDashboard::class);
         Livewire::component('therapist-dashboard', TherapistDashboard::class);
         Livewire::component('protocol-index', ProtocolIndex::class);

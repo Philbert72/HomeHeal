@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProtocolController;
 use App\Http\Controllers\Auth\RegisteredUserController; 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 // UNAUTHENTICATED ROUTES (Access BEFORE Login)
 
@@ -19,12 +21,11 @@ Route::get('/register', function () {
 Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 
 
-// LOGIN ROUTES (Now handled by the controller)
+// LOGIN ROUTES 
 Route::get('/login', function () {
     return view('auth.login'); 
 })->name('login');
 
-// FIX: Add POST route to handle form submission and authentication
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 
 
@@ -37,7 +38,7 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
     
-    // Add a Logout route here for completeness
+    // Logout route
     Route::post('/logout', function (Request $request) {
         Auth::logout();
         $request->session()->invalidate();
@@ -53,5 +54,21 @@ Route::middleware(['auth'])->group(function () {
 
     // RESOURCE ROUTING FOR PROTOCOLS (Secure CRUD Endpoints)
     Route::resource('protocols', ProtocolController::class);
+    
+    // --- PROTOCOL ASSIGNMENT ROUTES (FIXED) ---
+    // We apply the 'role' middleware to the individual routes here,
+    // ensuring both 'auth' and 'role:therapist' are required.
+    Route::prefix('protocols/{protocol}')->group(function () {
+        
+        // GET route for the assignment form
+        Route::get('assign', [ProtocolController::class, 'assign'])
+             ->middleware('role:therapist')
+             ->name('protocols.assign');
+        
+        // POST route for processing the form submission
+        Route::post('assign', [ProtocolController::class, 'processAssignment'])
+             ->middleware('role:therapist')
+             ->name('protocols.processAssignment');
+    });
     
 });
