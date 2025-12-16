@@ -85,13 +85,9 @@ class ProtocolController extends Controller
      */
     public function edit(Protocol $protocol)
     {
-        // Policy check: Ensures only the creator/authorized therapist can edit
         $this->authorize('update', $protocol);
 
-        // Eager load exercises with pivot data
         $protocol->load('exercises');
-        
-        // Fetch all exercises for the dropdown
         $exercises = Exercise::all();
 
         return view('protocols.edit', compact('protocol', 'exercises'));
@@ -136,6 +132,34 @@ class ProtocolController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Protocol $protocol)
+    {
+        $this->authorize('view', $protocol);
+        $protocol->load(['exercises', 'therapist']);
+        return view('protocols.show', compact('protocol'));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Protocol $protocol)
+    {
+        // 1. Authorization: Ensure only the creator/authorized therapist can delete
+        $this->authorize('delete', $protocol);
+
+        $protocolTitle = $protocol->title;
+        
+        // 2. Deletion: Laravel deletes the protocol, and CASCADE deletes pivot records
+        $protocol->delete();
+
+        // 3. Redirect with success message
+        return redirect()->route('protocols.index')
+                         ->with('success', 'Protocol "' . $protocolTitle . '" and all associated exercises were successfully deleted.');
+    }
+    
+    /**
      * Custom method to handle unit conversion and pivot array creation.
      */
     protected function preparePivotData(array $exerciseDataArray): array
@@ -162,21 +186,5 @@ class ProtocolController extends Controller
             ];
         }
         return $pivotData;
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Protocol $protocol)
-    {
-        // ... (show method remains the same)
-        $this->authorize('view', $protocol);
-        return view('protocols.show', compact('protocol'));
-    }
-
-    public function destroy(Protocol $protocol)
-    {
-        $this->authorize('delete', $protocol);
-        // Implementation goes here...
     }
 }
