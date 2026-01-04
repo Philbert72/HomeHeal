@@ -4,62 +4,75 @@ HomeHeal is a digital platform connecting physical therapists with patients to i
 
 ## 🚀 Getting Started Area
 
-Follow these instructions to set up the project on your local machine.
+Follow these instructions to set up the project on your local machine using XAMPP.
 
 ### Prerequisites
-Ensure you have the following installed:
-- **PHP** (8.2 or higher)
-- **Composer** (Dependency manager for PHP)
-- **Node.js** & **NPM** (For frontend assets)
-- **MySQL** (Or any other supported database)
+1.  **XAMPP**: Download and install from [apachefriends.org](https://www.apachefriends.org/).
+2.  **Composer**: Dependency manager for PHP.
+3.  **Node.js & NPM**: For frontend assets.
+4.  **Git**: To clone the repository.
 
 ### 📥 Installation Steps
 
-1.  **Clone the Repository**
+1.  **Start XAMPP Servers**
+    *   Open **XAMPP Control Panel**.
+    *   Click **Start** next to **Apache**.
+    *   Click **Start** next to **MySQL**.
+    *   *Ensure both turn green.*
+
+2.  **Create the Database**
+    *   Open your browser and go to `http://localhost/phpmyadmin`.
+    *   Click **New** in the sidebar.
+    *   Database name: `homeheal`
+    *   Click **Create**.
+
+3.  **Clone the Repository**
+    Open your terminal (Command Prompt or PowerShell) and navigate to where you want the project:
     ```bash
     git clone <repository-url>
     cd HomeHeal
     ```
 
-2.  **Install Backend Dependencies**
+4.  **Install Backend Dependencies**
     ```bash
     composer install
     ```
 
-3.  **Install Frontend Dependencies**
+5.  **Install Frontend Dependencies**
     ```bash
     npm install
     ```
 
-4.  **Environment Setup**
-    Copy the example environment file and configure it.
+6.  **Environment Setup**
+    Copy the example environment file:
     ```bash
     cp .env.example .env
     ```
-    *Open the `.env` file in a text editor and update your database settings:*
+    *Open the `.env` file in a text editor (like VS Code or Notepad) and check strict settings:*
     ```ini
     DB_CONNECTION=mysql
     DB_HOST=127.0.0.1
     DB_PORT=3306
-    DB_DATABASE=homeheal  # Make sure this database exists in your MySQL
-    DB_USERNAME=root      # Your database username
-    DB_PASSWORD=          # Your database password
+    DB_DATABASE=homeheal
+    DB_USERNAME=root
+    DB_PASSWORD=
     ```
+    *(Note: XAMPP default MySQL password is typically empty, so leave `DB_PASSWORD=` blank unless you changed it).*
 
-5.  **Generate App Key**
+7.  **Generate App Key**
     ```bash
     php artisan key:generate
     ```
 
-6.  **Create the Storage Link**
-    ```bash
-    php artisan storage:link
-    ```
-
-7.  **Setup Database**
-    Run migrations and seed the database with test data (Users, Protocols, Exercises).
+8.  **Setup Database Tables & Data**
+    Run migrations and seed the database with test data:
     ```bash
     php artisan migrate --seed
+    ```
+
+9.  **Create Storage Link**
+    ```bash
+    php artisan storage:link
     ```
 
 ---
