@@ -82,7 +82,9 @@
                     @forelse($patients as $patient)
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
                             <td class="px-8 py-4">
-                                <div class="font-medium text-slate-900 dark:text-white">{{ $patient['name'] }}</div>
+                                <a href="{{ route('patients.show', $patient['id']) }}" class="font-medium text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                                    {{ $patient['name'] }}
+                                </a>
                                 <div class="text-sm text-slate-500 dark:text-slate-400">{{ $patient['email'] }}</div>
                             </td>
                             <td class="px-8 py-4">

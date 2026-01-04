@@ -50,8 +50,11 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Sessions routes (Patient only)
+    Route::get('/sessions', [App\Http\Controllers\SessionController::class, 'index'])->name('sessions.index');
     Route::get('/sessions/create', [App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
     Route::post('/sessions', [App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
+    Route::get('/sessions/{session}/edit', [App\Http\Controllers\SessionController::class, 'edit'])->name('sessions.edit');
+    Route::put('/sessions/{session}', [App\Http\Controllers\SessionController::class, 'update'])->name('sessions.update');
 
 
 
@@ -59,6 +62,16 @@ Route::middleware(['auth'])->group(function () {
     // RESOURCE ROUTING FOR EXERCISES (Therapist only)
     Route::resource('exercises', App\Http\Controllers\ExerciseController::class);
 
+    // Protocol Assignment and Management Routes
+    Route::get('/protocols/{protocol}/assign', [App\Http\Controllers\ProtocolController::class, 'assign'])->name('protocols.assign');
+    Route::post('/protocols/{protocol}/assign', [App\Http\Controllers\ProtocolController::class, 'processAssignment'])->name('protocols.processAssignment');
+    Route::put('/protocols/{protocol}/patient/{patient}', [App\Http\Controllers\ProtocolController::class, 'updatePatientAssignment'])->name('protocols.updatePatientAssignment');
+    Route::resource('protocols', App\Http\Controllers\ProtocolController::class);
+    
+    // Patient Monitoring Route
+    Route::get('/patients/{patient}', [App\Http\Controllers\PatientController::class, 'show'])
+        ->middleware('role:therapist')
+        ->name('patients.show');
     // RESOURCE ROUTING FOR PROTOCOLS (Secure CRUD Endpoints)
     Route::resource('protocols', ProtocolController::class);
     

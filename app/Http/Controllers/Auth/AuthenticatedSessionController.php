@@ -21,7 +21,12 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         // 2. Attempt Authentication
-        if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        $credentials = [
+            'email' => trim($request->email),
+            'password' => $request->password,
+        ];
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);

@@ -18,7 +18,30 @@
     <form action="{{ route('protocols.processAssignment', $protocol) }}" method="POST" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8 space-y-6">
         @csrf
         
-        <h3 class="text-2xl font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Select Patients to Assign</h3>
+        <h3 class="text-2xl font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Assignment Details</h3>
+
+        <!-- Duration Input -->
+        <div>
+            <label for="duration_days" class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Duration (Days)</label>
+            <div class="relative">
+                <input 
+                    type="number" 
+                    id="duration_days" 
+                    name="duration_days" 
+                    value="{{ old('duration_days', 30) }}"
+                    min="1" 
+                    max="365"
+                    class="w-full pl-4 pr-16 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition dark:text-white"
+                >
+                <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
+                    <span class="text-slate-500 dark:text-slate-400">days</span>
+                </div>
+            </div>
+            @error('duration_days') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Default is 30 days. Patients will see this in their daily checklist for this duration.</p>
+        </div>
+
+        <h3 class="text-2xl font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 pt-4">Select Patients to Assign</h3>
         
         @if ($allPatients->isEmpty())
             <div class="bg-yellow-100 dark:bg-yellow-900/40 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 p-4 rounded" role="alert">

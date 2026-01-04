@@ -58,29 +58,71 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-cyan-200 dark:hover:border-cyan-900 transition">
             <div class="flex items-start justify-between">
                 <div>
-                    <p class="text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">Current Protocol</p>
-                    <!-- DYNAMIC VALUE: Current Protocol Title -->
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">
-                        @if ($currentProtocol)
-                            {{ $currentProtocol->title }}
-                        @else
-                            No Protocol Assigned
-                        @endif
+                    <p class="text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">Active Protocols</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold text-slate-900 dark:text-white">{{ count($dailyChecklist) }}</span>
+                        <span class="text-sm text-slate-500 dark:text-slate-400">assigned</span>
                     </div>
                     <p class="text-cyan-600 dark:text-cyan-400 text-sm mt-3 font-medium">
-                        @if ($currentProtocol)
-                            Assigned by Dr. {{ $currentProtocol->therapist->name ?? 'Unknown' }}
-                        @else
-                            Contact your therapist.
-                        @endif
+                        {{ collect($dailyChecklist)->where('completed_today', true)->count() }} completed today
                     </p>
                 </div>
                 <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/50 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                     </svg>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Today's Protocol Checklist -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+        <div class="px-8 py-6 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border-b border-slate-200 dark:border-slate-700">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Today's Plan</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400">Complete these protocols to stay on track.</p>
+        </div>
+        <div class="divide-y divide-slate-200 dark:divide-slate-700">
+            @forelse($dailyChecklist as $item)
+                <div class="px-8 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ $item['protocol']->title }}</h3>
+                            @if($item['completed_today'])
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                    Done for Today
+                                </span>
+                            @endif
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            Assigned by {{ $item['protocol']->therapist->name ?? 'Dr. Therapist' }} • 
+                            <span class="{{ $item['days_remaining'] < 3 ? 'text-amber-600 dark:text-amber-400 font-medium' : '' }}">
+                                {{ $item['days_remaining'] }} days remaining
+                            </span>
+                        </p>
+                    </div>
+
+                    <div>
+                        @if($item['completed_today'])
+                            <button disabled class="flex items-center gap-2 px-6 py-2 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 font-semibold rounded-lg cursor-not-allowed">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Completed
+                            </button>
+                        @else
+                            <a href="{{ route('sessions.create', ['protocol_id' => $item['protocol']->id]) }}" class="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Log Session
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="px-8 py-8 text-center text-slate-500 dark:text-slate-400">
+                    <p class="text-lg font-medium">No active protocols.</p>
+                    <p class="text-sm">Contact your therapist to get a new assignment.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 
@@ -115,15 +157,18 @@
 
     <!-- Recent Sessions -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div class="px-8 py-6 border-b border-slate-200 dark:border-slate-700">
+        <div class="px-8 py-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recent Session Logs</h2>
+            <a href="{{ route('sessions.index') }}" class="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300">
+                View All Session History &rarr;
+            </a>
         </div>
         <div class="divide-y divide-slate-200 dark:divide-slate-700">
             @forelse ($recentSessions as $session)
-                <div class="px-8 py-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer">
+                <a href="{{ route('sessions.edit', $session) }}" class="block px-8 py-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition group">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="font-semibold text-slate-900 dark:text-white">{{ $session->protocol->title ?? 'Unassigned Protocol' }}</h3>
+                            <h3 class="font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">{{ $session->protocol->title ?? 'Unassigned Protocol' }}</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Logged {{ $session->created_at->diffForHumans() }} ({{ $session->log_date->format('M j, Y') }})</p>
                         </div>
                         <div class="flex items-center gap-3">
@@ -148,7 +193,7 @@
                             </span>
                         </div>
                     </div>
-                </div>
+                </a>
             @empty
                 <div class="px-8 py-6 text-slate-500 dark:text-slate-400 text-center">
                     No sessions logged yet. Log your first session to see progress!

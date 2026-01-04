@@ -168,22 +168,48 @@ class ProtocolController extends Controller
         $this->authorize('update', $protocol);
 
         $validated = $request->validate([
-            // patients array is optional (allows unassigning everyone)
             'patients' => 'nullable|array',
             'patients.*' => ['exists:users,id', Rule::in(User::patient()->pluck('id'))],
+            'duration_days' => 'required|integer|min:1|max:365',
         ]);
 
         $patientIds = $validated['patients'] ?? [];
+        $durationDays = $validated['duration_days'];
 
-        // Sync the patient list to the protocol_user pivot table
-        $protocol->patients()->sync($patientIds);
+        // Prepare pivot data with duration
+        $pivotData = [];
+        foreach ($patientIds as $id) {
+            $pivotData[$id] = ['duration_days' => $durationDays];
+        }
+
+        // Sync the patient list to the protocol_user pivot table with the extra data
+        $protocol->patients()->sync($pivotData);
 
         $patientCount = count($patientIds);
         $message = $patientCount > 0 
-                   ? "Protocol assigned successfully to $patientCount patient(s)." 
+                   ? "Protocol assigned successfully to $patientCount patient(s) for $durationDays days." 
                    : "All patients unassigned from the protocol.";
 
         return redirect()->route('protocols.show', $protocol)->with('success', $message);
+    }
+    
+    /**
+     * Update the assignment details for a specific patient.
+     */
+    public function updatePatientAssignment(Request $request, Protocol $protocol, User $patient)
+    {
+        $this->authorize('update', $protocol);
+
+        $validated = $request->validate([
+            'duration_days' => 'required|integer|min:1|max:365',
+        ]);
+
+        // Update existing pivot record
+        $protocol->patients()->updateExistingPivot($patient->id, [
+            'duration_days' => $validated['duration_days'],
+        ]);
+
+        return redirect()->back()->with('success', 'Assignment updated successfully for ' . $patient->name);
     }
     
     /**

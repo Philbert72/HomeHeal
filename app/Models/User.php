@@ -46,6 +46,7 @@ class User extends Authenticatable
     public function assignedProtocols(): BelongsToMany
     {
         return $this->belongsToMany(Protocol::class, 'protocol_user')
+                    ->withPivot('duration_days')
                     ->withTimestamps();
     }
 
@@ -74,6 +75,7 @@ class User extends Authenticatable
         // Links to Protocol via the 'protocol_user' pivot table.
         // We use withTimestamps() to access the 'pivot_created_at' in the Livewire component.
         return $this->belongsToMany(Protocol::class, 'protocol_user', 'user_id', 'protocol_id')
+                    ->withPivot('duration_days')
                     ->withTimestamps();
     }
 

@@ -13,7 +13,8 @@ class PatientDashboard extends Component
     public $user;
     public $averagePainScore = 0;
     public $sessionsCompleted = 0;
-    public $currentProtocol = null;
+    // public $currentProtocol = null; // Removed in favor of checklist
+    public $dailyChecklist = [];
     public $recentSessions = [];
     public $painChartData = [];
     public $sessionFrequencyData = [];
@@ -23,11 +24,11 @@ class PatientDashboard extends Component
     {
         $this->user = Auth::user();
         if (!$this->user || $this->user->role !== 'patient') {
-            // Safety check: only load data if a patient is logged in
             return;
         }
 
         $this->loadMetrics();
+        $this->loadDailyChecklist();
         $this->loadRecentSessions();
         $this->loadChartData();
     }
@@ -45,9 +46,43 @@ class PatientDashboard extends Component
         if ($last30DaysLogs->isNotEmpty()) {
             $this->averagePainScore = round($last30DaysLogs->avg('pain_score'), 1);
         }
+    }
 
-        // 3. Determine Current Protocol
-        $this->currentProtocol = $this->user->protocols()->with('therapist')->latest('pivot_created_at')->first();
+    private function loadDailyChecklist()
+    {
+        // Fetch all assigned protocols with pivot data
+        $allProtocols = $this->user->protocols()->with('therapist')->get();
+        
+        $checklist = [];
+
+        foreach ($allProtocols as $protocol) {
+            $assignedAt = $protocol->pivot->created_at;
+            $durationDays = $protocol->pivot->duration_days ?? 30; // Default to 30 days if null
+            
+            // Calculate end date
+            $endDate = $assignedAt->copy()->addDays($durationDays);
+
+            // Check if active (today is before or equal to end date)
+            $isActive = now()->startOfDay()->lte($endDate->endOfDay());
+
+            if ($isActive) {
+                // Check if completed today
+                $completedToday = $this->user->dailySessionLogs()
+                    ->where('protocol_id', $protocol->id)
+                    ->whereDate('log_date', now()->today())
+                    ->exists();
+
+                $checklist[] = [
+                    'protocol' => $protocol,
+                    'assigned_at' => $assignedAt,
+                    'end_date' => $endDate,
+                    'completed_today' => $completedToday,
+                    'days_remaining' => (int) ceil(now()->floatDiffInDays($endDate, false)),
+                ];
+            }
+        }
+
+        $this->dailyChecklist = $checklist;
     }
 
     private function loadRecentSessions()
