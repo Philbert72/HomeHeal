@@ -47,10 +47,17 @@ Route::middleware(['auth'])->group(function () {
     })->name('logout');
 
 
-    // Sessions creation route
-    Route::get('/sessions/create', function () {
-        return view('sessions.create');
-    })->name('sessions.create');
+
+
+    // Sessions routes (Patient only)
+    Route::get('/sessions/create', [App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
+    Route::post('/sessions', [App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
+
+
+
+
+    // RESOURCE ROUTING FOR EXERCISES (Therapist only)
+    Route::resource('exercises', App\Http\Controllers\ExerciseController::class);
 
     // RESOURCE ROUTING FOR PROTOCOLS (Secure CRUD Endpoints)
     Route::resource('protocols', ProtocolController::class);

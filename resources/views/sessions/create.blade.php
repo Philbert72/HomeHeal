@@ -1,92 +1,181 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- Redesigned session logging form with better visual sections -->
-<div class="max-w-2xl mx-auto">
+<!-- Fully functional session logging form -->
+<div class="max-w-3xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-4xl font-bold text-slate-900 mb-2">Log Today's Session</h1>
-        <p class="text-slate-600">Protocol: <span class="font-semibold text-emerald-600">ACL Rehab - Phase 2</span></p>
+        <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">Log Today's Session</h1>
+        <p class="text-slate-600 dark:text-slate-400">Track your progress by recording your therapy session</p>
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div class="px-8 py-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200">
-            <h2 class="text-lg font-bold text-slate-900">Exercise Checklist</h2>
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="px-8 py-6 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-b border-slate-200 dark:border-slate-700">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Session Details</h2>
         </div>
 
-        <form action="#" method="POST" class="p-8 space-y-8">
+        <form action="{{ route('sessions.store') }}" method="POST" class="p-8 space-y-8" x-data="sessionForm()">
             @csrf
             
-            <!-- Exercise Checklist Section -->
-            <div class="space-y-4">
-                <div class="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer">
-                    <input id="ex1" name="exercises[]" type="checkbox" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-2 focus:ring-emerald-500 cursor-pointer mt-1">
-                    <div class="flex-1">
-                        <label for="ex1" class="font-semibold text-slate-900 block">Quad Sets (3 sets x 10 reps)</label>
-                        <p class="text-sm text-slate-500 mt-1">Hold for 5 seconds each rep. Focus on controlled movement.</p>
-                    </div>
-                </div>
+            <!-- Protocol Selection -->
+            <div>
+                <label for="protocol_id" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Select Protocol <span class="text-red-500">*</span></label>
+                <select 
+                    id="protocol_id" 
+                    name="protocol_id" 
+                    required
+                    x-model="selectedProtocol"
+                    @change="updateExercises()"
+                    class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white dark:bg-slate-700 dark:text-white cursor-pointer font-medium @error('protocol_id') border-red-500 @enderror"
+                >
+                    <option value="">Choose a protocol</option>
+                    @foreach($protocols as $protocol)
+                        <option value="{{ $protocol->id }}" {{ old('protocol_id') == $protocol->id ? 'selected' : '' }}>
+                            {{ $protocol->title }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('protocol_id')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
 
-                <div class="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition cursor-pointer">
-                    <input id="ex2" name="exercises[]" type="checkbox" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-2 focus:ring-emerald-500 cursor-pointer mt-1">
-                    <div class="flex-1">
-                        <label for="ex2" class="font-semibold text-slate-900 block">Heel Slides (3 sets x 15 reps)</label>
-                        <p class="text-sm text-slate-500 mt-1">Use a towel if needed. Move through full range of motion.</p>
-                    </div>
+            <!-- Protocol Exercises Display -->
+            <div x-show="selectedProtocol" x-transition class="space-y-3">
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Protocol Exercises:</h3>
+                <div class="space-y-2">
+                    @foreach($protocols as $protocol)
+                        <div x-show="selectedProtocol == {{ $protocol->id }}" class="space-y-2">
+                            @foreach($protocol->exercises as $exercise)
+                                <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+                                    <div class="font-medium text-slate-900 dark:text-white">{{ $exercise->name }}</div>
+                                    <div class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                        {{ $exercise->pivot->sets }} sets × {{ $exercise->pivot->reps }} reps
+                                        @if($exercise->pivot->rest_seconds)
+                                            • {{ $exercise->pivot->rest_seconds }}s rest
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
-            <div class="h-px bg-slate-200"></div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700"></div>
+
+            <!-- Session Date -->
+            <div>
+                <label for="log_date" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Session Date <span class="text-red-500">*</span></label>
+                <input 
+                    type="date" 
+                    id="log_date" 
+                    name="log_date" 
+                    required
+                    value="{{ old('log_date', date('Y-m-d')) }}"
+                    max="{{ date('Y-m-d') }}"
+                    class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition dark:bg-slate-700 dark:text-white dark:[color-scheme:dark] @error('log_date') border-red-500 @enderror"
+                >
+                @error('log_date')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
 
             <!-- Assessment Section -->
             <div class="space-y-6">
                 <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Pain Score -->
                     <div>
-                        <label for="pain_score" class="block text-sm font-semibold text-slate-900 mb-3">Pain Score (0-10)</label>
-                        <select id="pain_score" name="pain_score" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white cursor-pointer font-medium">
-                            <option value="">Select a pain level</option>
-                            <option value="0">0 - No Pain</option>
-                            <option value="1">1 - Minimal</option>
-                            <option value="2">2 - Very Light</option>
-                            <option value="3">3 - Light</option>
-                            <option value="4">4</option>
-                            <option value="5">5 - Moderate</option>
-                            <option value="6">6</option>
-                            <option value="7">7 - Significant</option>
-                            <option value="8">8 - Heavy</option>
-                            <option value="9">9 - Severe</option>
-                            <option value="10">10 - Worst Pain Possible</option>
+                        <label for="pain_score" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Pain Score (0-10) <span class="text-red-500">*</span></label>
+                        <select 
+                            id="pain_score" 
+                            name="pain_score" 
+                            required
+                            class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white dark:bg-slate-700 dark:text-white cursor-pointer font-medium @error('pain_score') border-red-500 @enderror"
+                        >
+                            <option value="">Select pain level</option>
+                            <option value="0" {{ old('pain_score') == '0' ? 'selected' : '' }}>0 - No Pain</option>
+                            <option value="1" {{ old('pain_score') == '1' ? 'selected' : '' }}>1 - Minimal</option>
+                            <option value="2" {{ old('pain_score') == '2' ? 'selected' : '' }}>2 - Very Light</option>
+                            <option value="3" {{ old('pain_score') == '3' ? 'selected' : '' }}>3 - Light</option>
+                            <option value="4" {{ old('pain_score') == '4' ? 'selected' : '' }}>4</option>
+                            <option value="5" {{ old('pain_score') == '5' ? 'selected' : '' }}>5 - Moderate</option>
+                            <option value="6" {{ old('pain_score') == '6' ? 'selected' : '' }}>6</option>
+                            <option value="7" {{ old('pain_score') == '7' ? 'selected' : '' }}>7 - Significant</option>
+                            <option value="8" {{ old('pain_score') == '8' ? 'selected' : '' }}>8 - Heavy</option>
+                            <option value="9" {{ old('pain_score') == '9' ? 'selected' : '' }}>9 - Severe</option>
+                            <option value="10" {{ old('pain_score') == '10' ? 'selected' : '' }}>10 - Worst Possible</option>
                         </select>
+                        @error('pain_score')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
+                    <!-- Difficulty Rating -->
                     <div>
-                        <label for="difficulty" class="block text-sm font-semibold text-slate-900 mb-3">Exercise Difficulty</label>
-                        <select id="difficulty" name="difficulty" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white cursor-pointer font-medium">
+                        <label for="difficulty_rating" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Exercise Difficulty <span class="text-red-500">*</span></label>
+                        <select 
+                            id="difficulty_rating" 
+                            name="difficulty_rating" 
+                            required
+                            class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white dark:bg-slate-700 dark:text-white cursor-pointer font-medium @error('difficulty_rating') border-red-500 @enderror"
+                        >
                             <option value="">Select difficulty</option>
-                            <option value="1">1 - Very Easy</option>
-                            <option value="2">2 - Easy</option>
-                            <option value="3">3 - Moderate</option>
-                            <option value="4">4 - Hard</option>
-                            <option value="5">5 - Extreme Effort</option>
+                            <option value="1" {{ old('difficulty_rating') == '1' ? 'selected' : '' }}>1 - Very Easy</option>
+                            <option value="2" {{ old('difficulty_rating') == '2' ? 'selected' : '' }}>2 - Easy</option>
+                            <option value="3" {{ old('difficulty_rating') == '3' ? 'selected' : '' }}>3 - Moderate</option>
+                            <option value="4" {{ old('difficulty_rating') == '4' ? 'selected' : '' }}>4 - Hard</option>
+                            <option value="5" {{ old('difficulty_rating') == '5' ? 'selected' : '' }}>5 - Very Hard</option>
                         </select>
+                        @error('difficulty_rating')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
+                <!-- Notes -->
                 <div>
-                    <label for="notes" class="block text-sm font-semibold text-slate-900 mb-3">Session Notes</label>
-                    <textarea id="notes" name="notes" rows="4" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none" placeholder="How did you feel today? Any improvements or concerns?"></textarea>
+                    <label for="notes" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Session Notes (Optional)</label>
+                    <textarea 
+                        id="notes" 
+                        name="notes" 
+                        rows="4" 
+                        maxlength="1000"
+                        class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none dark:bg-slate-700 dark:text-white @error('notes') border-red-500 @enderror" 
+                        placeholder="How did you feel today? Any improvements or concerns?"
+                    >{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="flex gap-4 pt-6 border-t border-slate-200">
+            <div class="flex gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                 <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-700 transition shadow-sm">
                     Complete Session
                 </button>
-                <a href="{{ route('dashboard') }}" class="px-6 py-3 border-2 border-slate-300 text-slate-900 font-semibold rounded-lg hover:border-slate-400 transition text-center">
+                <a href="{{ route('dashboard') }}" class="px-6 py-3 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white font-semibold rounded-lg hover:border-slate-400 dark:hover:border-slate-500 transition text-center">
                     Cancel
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function sessionForm() {
+    return {
+        selectedProtocol: '{{ old('protocol_id') }}',
+        updateExercises() {
+            // Exercises update handled by Alpine x-show
+        }
+    }
+}
+</script>
 @endsection

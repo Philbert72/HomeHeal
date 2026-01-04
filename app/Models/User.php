@@ -76,4 +76,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Protocol::class, 'protocol_user', 'user_id', 'protocol_id')
                     ->withTimestamps();
     }
+
+    /**
+     * Get the patient's most recent session log.
+     */
+    public function latestSessionLog()
+    {
+        return $this->hasOne(DailySessionLog::class, 'patient_id')->latestOfMany('log_date');
+    }
 }

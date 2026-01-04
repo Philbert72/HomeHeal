@@ -4,39 +4,39 @@
 <div class="space-y-8 max-w-xl mx-auto">
     <!-- Header -->
     <div class="flex items-start justify-between">
-        <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Assign Protocol</h1>
-        <a href="{{ route('protocols.show', $protocol) }}" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition">← Back to Protocol</a>
+        <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Assign Protocol</h1>
+        <a href="{{ route('protocols.show', $protocol) }}" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">← Back to Protocol</a>
     </div>
 
     <!-- Protocol Summary -->
-    <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
-        <h2 class="text-xl font-bold text-indigo-700">{{ $protocol->title }}</h2>
-        <p class="text-slate-600 text-sm mt-1">{{ $protocol->description }}</p>
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow border border-slate-200 dark:border-slate-700">
+        <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-400">{{ $protocol->title }}</h2>
+        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ $protocol->description }}</p>
     </div>
 
     <!-- Assignment Form -->
-    <form action="{{ route('protocols.processAssignment', $protocol) }}" method="POST" class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-6">
+    <form action="{{ route('protocols.processAssignment', $protocol) }}" method="POST" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8 space-y-6">
         @csrf
         
-        <h3 class="text-2xl font-semibold text-slate-800 border-b pb-2">Select Patients to Assign</h3>
+        <h3 class="text-2xl font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Select Patients to Assign</h3>
         
         @if ($allPatients->isEmpty())
-            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded" role="alert">
+            <div class="bg-yellow-100 dark:bg-yellow-900/40 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 p-4 rounded" role="alert">
                 <p class="font-bold">No Patients Found</p>
                 <p>Please create patient user accounts before assigning protocols.</p>
             </div>
         @else
             <!-- Patients List (Checkboxes) -->
-            <div class="space-y-3 max-h-80 overflow-y-auto p-3 border rounded-lg bg-slate-50">
+            <div class="space-y-3 max-h-80 overflow-y-auto p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900">
                 @foreach ($allPatients as $patient)
-                    <label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-100 transition">
+                    <label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                         <input type="checkbox" name="patients[]" value="{{ $patient->id }}" 
                                 @checked(in_array($patient->id, $assignedPatientIds))
-                                class="form-checkbox h-5 w-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                class="form-checkbox h-5 w-5 text-indigo-600 dark:text-indigo-500 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 bg-white dark:bg-slate-700">
                         
                         <div class="flex flex-col">
-                            <span class="text-base font-medium text-slate-900">{{ $patient->name }}</span>
-                            <span class="text-xs text-slate-500">{{ $patient->email }}</span>
+                            <span class="text-base font-medium text-slate-900 dark:text-white">{{ $patient->name }}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ $patient->email }}</span>
                         </div>
                     </label>
                 @endforeach
@@ -46,7 +46,7 @@
         @endif
 
         <!-- Submit Button -->
-        <div class="pt-4 border-t border-slate-200">
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
             <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-md">
                 Update Assignment
             </button>

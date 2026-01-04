@@ -13,6 +13,11 @@ class Exercise extends Model
     protected $fillable = [
         'name',
         'instructions',
+        'image_path',
+        'video_url',
+        'equipment_needed',
+        'safety_warnings',
+        'step_by_step_guide',
     ];
 
     /**

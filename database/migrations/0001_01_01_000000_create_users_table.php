@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->rememberToken();
             $table->string('locale')->default('en');
             $table->string('timezone', 100)->default('WIB');
             $table->timestamps();

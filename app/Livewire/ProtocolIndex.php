@@ -11,6 +11,8 @@ class ProtocolIndex extends Component
     public $protocols = [];
     public $user;
     public $isTherapist;
+    public $search = '';
+    public $sortBy = 'latest'; // latest, oldest, name
 
     public function mount()
     {
@@ -22,20 +24,50 @@ class ProtocolIndex extends Component
         $this->loadProtocols();
     }
 
+    public function updatedSearch()
+    {
+        $this->loadProtocols();
+    }
+
+    public function updatedSortBy()
+    {
+        $this->loadProtocols();
+    }
+
     private function loadProtocols()
     {
         if ($this->isTherapist) {
             // Therapist: Load all protocols they created, with patient counts.
-            $this->protocols = $this->user->createdProtocols()
-                ->with(['therapist', 'patients']) // Eager load relationships
-                ->withCount('patients')
-                ->latest()
-                ->get();
+            $query = $this->user->createdProtocols()
+                ->with(['therapist', 'patients'])
+                ->withCount('patients');
+
+            // Search
+            if ($this->search) {
+                $query->where(function($q) {
+                    $q->where('title', 'like', '%' . $this->search . '%')
+                      ->orWhere('description', 'like', '%' . $this->search . '%');
+                });
+            }
+
+            // Sort
+            switch ($this->sortBy) {
+                case 'oldest':
+                    $query->oldest();
+                    break;
+                case 'name':
+                    $query->orderBy('title');
+                    break;
+                default:
+                    $query->latest();
+            }
+
+            $this->protocols = $query->get();
         } else {
             // Patient: Load all protocols they are assigned to.
             $this->protocols = $this->user->protocols()
                 ->with(['therapist'])
-                ->latest('pivot_created_at') // Sort by assignment date
+                ->latest('pivot_created_at')
                 ->get();
         }
     }
