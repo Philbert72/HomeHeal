@@ -21,9 +21,9 @@ class User extends Authenticatable
         'locale',
         'timezone',
     ];
+
     protected $hidden = [
         'password',
-        // 'remember_token' is removed since the migration doesn't include it.
     ];
 
     protected $casts = [
@@ -33,28 +33,12 @@ class User extends Authenticatable
 
     /**
      * A Therapist user can create many Protocols.
+     * (Used for Therapist Dashboard)
      */
     public function createdProtocols(): HasMany
     {
         // Links to the 'therapist_id' field on the protocols table
         return $this->hasMany(Protocol::class, 'therapist_id');
-    }
-
-    /**
-     * A Patient is assigned many Protocols.
-     */
-    public function assignedProtocols(): BelongsToMany
-    {
-        return $this->belongsToMany(Protocol::class, 'protocol_user')
-                    ->withTimestamps();
-    }
-
-    /**
-     * Scope to return only users with the 'patient' role.
-     */
-    public function scopePatient(Builder $query): void
-    {
-        $query->where('role', 'patient');
     }
 
     /**
@@ -67,7 +51,8 @@ class User extends Authenticatable
     }
 
     /**
-     * This relationship is used by the PatientDashboard component.
+     * A Patient is assigned many Protocols.
+     * This is the standardized relationship used by controllers and the PatientDashboard component.
      */
     public function protocols(): BelongsToMany
     {
@@ -75,5 +60,15 @@ class User extends Authenticatable
         // We use withTimestamps() to access the 'pivot_created_at' in the Livewire component.
         return $this->belongsToMany(Protocol::class, 'protocol_user', 'user_id', 'protocol_id')
                     ->withTimestamps();
+    }
+    
+    // NOTE: Removing duplicate definition of assignedProtocols() and protocols()
+
+    /**
+     * Scope to return only users with the 'patient' role.
+     */
+    public function scopePatient(Builder $query): void
+    {
+        $query->where('role', 'patient');
     }
 }

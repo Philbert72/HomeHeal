@@ -22,7 +22,8 @@ class DailySessionLogController extends Controller
         }
 
         // 2. Fetch the patient's assigned protocol
-        $protocol = Auth::user()->assignedProtocols()
+        // CRITICAL FIX: Use the standardized 'protocols()' method
+        $protocol = Auth::user()->protocols()
             ->with(['exercises' => function ($query) {
                 // Ensure exercises and their pivot data are loaded
                 $query->withPivot(['sets', 'reps', 'resistance_amount', 'resistance_original_unit']);
@@ -33,6 +34,18 @@ class DailySessionLogController extends Controller
         if (!$protocol) {
             return redirect()->route('dashboard')->with('error', 'You have no active protocols assigned to log a session.');
         }
+
+        // 4. Check if a session is already logged for today
+        $today = Carbon::today()->toDateString();
+        $existingLog = DailySessionLog::where('patient_id', Auth::id())
+                                      ->where('protocol_id', $protocol->id)
+                                      ->whereDate('log_date', $today)
+                                      ->exists();
+
+        if ($existingLog) {
+            return redirect()->route('dashboard')->with('error', 'You have already logged a session for the protocol "' . $protocol->title . '" today.');
+        }
+
 
         // We pass the protocol and its exercises to the view
         return view('sessions.create', compact('protocol'));
@@ -50,21 +63,33 @@ class DailySessionLogController extends Controller
         // 1. Validation
         $validated = $request->validate([
             'protocol_id' => 'required|exists:protocols,id',
-            'exercises' => 'nullable|array', // Array of completed exercise IDs
+            'exercises' => 'nullable|array',
             'exercises.*' => 'exists:exercises,id',
             'pain_score' => 'required|integer|min:0|max:10',
             'difficulty_score' => 'required|integer|min:1|max:5', 
             'notes' => 'nullable|string|max:1000',
         ]);
 
+        // Re-check existence before storing to prevent race conditions or repeated submission errors
+        $today = Carbon::today()->toDateString();
+        $existingLog = DailySessionLog::where('patient_id', Auth::id())
+                                      ->where('protocol_id', $validated['protocol_id'])
+                                      ->whereDate('log_date', $today)
+                                      ->exists();
+
+        if ($existingLog) {
+             return redirect()->route('dashboard')->with('error', 'A session log for this protocol has already been submitted today.');
+        }
+
+
         DB::transaction(function () use ($validated) {
             
-            // 2. Create the log record
+            // Create the log record
             DailySessionLog::create([
                 'patient_id' => Auth::id(), 
                 'protocol_id' => $validated['protocol_id'],
                 
-                // CRITICAL FIX: Add log_date, setting it to today
+                // Set log_date to today
                 'log_date' => Carbon::today(), 
                 
                 'pain_score' => $validated['pain_score'],

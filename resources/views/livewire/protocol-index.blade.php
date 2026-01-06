@@ -40,32 +40,35 @@
 
         @forelse ($protocols as $protocol)
             @php
-                // Logic for status color and text (simplified for now)
-                $status = $protocol->pivot ? 'Active' : 'Created';
-                $statusColor = $protocol->pivot ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800';
-                $iconColor = $protocol->pivot ? 'text-emerald-600' : 'text-indigo-600';
-                $buttonColor = $protocol->pivot ? 'text-emerald-600 hover:text-emerald-700' : 'text-indigo-600 hover:text-indigo-700';
-
-                // Get therapist's initials for the placeholder circle
                 $therapist = $protocol->therapist;
                 $initials = strtoupper(substr($therapist->name, 0, 1) . substr(strrchr($therapist->name, ' '), 1, 1));
                 
-                // Mock progress for patient view (since actual progress requires session logs)
+                // --- PROGRESS LOGIC FIX ---
                 $progress = 0; 
                 if (!$isTherapist) {
-                    // Placeholder logic: 65% if assigned, 0% if just created
-                    $progress = $protocol->pivot ? 65 : 0; 
+                    // CRITICAL FIX: Get dynamic progress from the Model accessor
+                    $progress = $protocol->current_progress; 
                     $status = $protocol->pivot ? 'Active' : 'Pending Start';
                 } else {
                     $status = $protocol->patients_count > 0 ? 'Assigned ('.$protocol->patients_count.')' : 'Draft';
-                    $statusColor = $protocol->patients_count > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800';
                 }
+                
+                // Status Styling based on current $status value
+                $statusColor = 'bg-slate-100 text-slate-800';
+                if (str_contains($status, 'Active')) {
+                    $statusColor = 'bg-emerald-100 text-emerald-800';
+                } elseif (str_contains($status, 'Draft')) {
+                    $statusColor = 'bg-slate-100 text-slate-800';
+                } elseif (str_contains($status, 'Assigned')) {
+                    $statusColor = 'bg-amber-100 text-amber-800';
+                }
+
 
             @endphp
             <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition group">
                 <div class="p-6 space-y-6">
                     <div class="flex justify-between items-start">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center {{ $iconColor }} group-hover:scale-110 transition">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
@@ -118,7 +121,7 @@
                         @endif
                         
                         <!-- All users can view details -->
-                        <a href="{{ route('protocols.show', $protocol) }}" class="text-sm font-semibold {{ $buttonColor }} hover:underline">
+                        <a href="{{ route('protocols.show', $protocol) }}" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline">
                             View Details →
                         </a>
                     </div>

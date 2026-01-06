@@ -9,9 +9,25 @@
         
         <!-- Only show Log Session button if user is a Patient -->
         @if ($user && $user->role === 'patient')
-            <a href="{{ route('sessions.create') }}" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-700 transition shadow-sm">
-                + Log Session
-            </a>
+            <!-- CRITICAL FIX: Check if a protocol is assigned AND if a session is already logged -->
+            @if ($currentProtocol)
+                @if ($hasLoggedToday)
+                    <!-- Button disabled if already logged today -->
+                    <button disabled class="px-6 py-3 bg-slate-400 text-white font-semibold rounded-lg shadow-sm opacity-70 cursor-not-allowed transition">
+                        ✓ Logged Today
+                    </button>
+                @else
+                    <!-- Button active if no log exists for today -->
+                    <a href="{{ route('sessions.create') }}" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-700 transition shadow-sm">
+                        + Log Session
+                    </a>
+                @endif
+            @else
+                <!-- Show disabled button if no protocol is assigned -->
+                 <button disabled class="px-6 py-3 bg-slate-400 text-white font-semibold rounded-lg opacity-50 cursor-not-allowed shadow-sm">
+                    + Log Session
+                </button>
+            @endif
         @endif
     </div>
 

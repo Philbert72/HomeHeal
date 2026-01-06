@@ -7,6 +7,7 @@ use App\Models\DailySessionLog;
 use App\Models\Protocol;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 class PatientDashboard extends Component
 {
@@ -15,17 +16,25 @@ class PatientDashboard extends Component
     public $sessionsCompleted = 0;
     public $currentProtocol = null;
     public $recentSessions = [];
+    public $hasLoggedToday = false; // CRITICAL: New property to control button state
 
     public function mount()
     {
         $this->user = Auth::user();
         if (!$this->user || $this->user->role !== 'patient') {
-            // Safety check: only load data if a patient is logged in
             return;
         }
 
         $this->loadMetrics();
         $this->loadRecentSessions();
+        
+        // CRITICAL FIX: Check if a log exists for today
+        if ($this->currentProtocol) {
+            $this->hasLoggedToday = DailySessionLog::where('patient_id', $this->user->id)
+                                                  ->where('protocol_id', $this->currentProtocol->id)
+                                                  ->whereDate('log_date', Carbon::today())
+                                                  ->exists();
+        }
     }
 
     private function loadMetrics()
@@ -43,9 +52,6 @@ class PatientDashboard extends Component
         }
 
         // 3. Determine Current Protocol
-        // We use the 'patients' relationship on the User model to find assigned protocols.
-        // The relationship is defined on the Protocol model, so we need to ensure the inverse is set up on the User model
-        // For now, we assume a relationship exists to fetch assigned protocols:
         $this->currentProtocol = $this->user->protocols()->with('therapist')->latest('pivot_created_at')->first();
     }
 
@@ -61,7 +67,6 @@ class PatientDashboard extends Component
 
     public function render()
     {
-        // This links to the component view file
         return view('livewire.patient-dashboard');
     }
 }
