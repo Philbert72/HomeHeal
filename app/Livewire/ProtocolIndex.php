@@ -37,12 +37,10 @@ class ProtocolIndex extends Component
     private function loadProtocols()
     {
         if ($this->isTherapist) {
-            // Therapist: Load all protocols they created, with patient counts.
             $query = $this->user->createdProtocols()
                 ->with(['therapist', 'patients'])
                 ->withCount('patients');
 
-            // Search
             if ($this->search) {
                 $query->where(function($q) {
                     $q->where('title', 'like', '%' . $this->search . '%')
@@ -50,7 +48,6 @@ class ProtocolIndex extends Component
                 });
             }
 
-            // Sort
             switch ($this->sortBy) {
                 case 'oldest':
                     $query->oldest();
@@ -64,7 +61,6 @@ class ProtocolIndex extends Component
 
             $this->protocols = $query->get();
         } else {
-            // Patient: Load all protocols they are assigned to.
             $this->protocols = $this->user->protocols()
                 ->with(['therapist'])
                 ->latest('pivot_created_at')

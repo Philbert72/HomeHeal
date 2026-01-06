@@ -9,16 +9,14 @@
     @livewireStyles
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- Dark Mode Initialization (prevent flash) -->
+    <!-- Dark Mode Initialization -->
     <script>
-        // Initialize dark mode
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark')
         } else {
             document.documentElement.classList.remove('dark')
         }
         
-        // Toggle function - make it globally accessible
         window.toggleDarkMode = function() {
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
@@ -37,7 +35,6 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-8">
-                    <!-- LOGO LINK UPDATED: Redirects to dashboard if logged in, otherwise welcome page -->
                     <a href="{{ Auth::check() ? route('dashboard') : '/' }}" class="flex items-center gap-2">
                         <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-lg">H</span>
@@ -115,7 +112,6 @@
                                     <span class="text-white font-semibold text-xs">{{ substr(Auth::user()->name, 0, 1) }}</span>
                                 </div>
                                 <div class="hidden sm:block text-left">
-                                    <!-- User Name: Dark mode color set to slate-200 (light) -->
                                     <div class="text-sm font-semibold text-slate-900 dark:text-slate-200">{{ Auth::user()->name }}</div>
                                     <div class="text-xs text-slate-500 capitalize">{{ Auth::user()->role }}</div>
                                 </div>
@@ -151,7 +147,6 @@
                                     <span class="text-white font-semibold">{{ substr(Auth::user()->name, 0, 1) }}</span>
                                 </div>
                                 <div>
-                                    <!-- User Name (Mobile): Light text for dark mode -->
                                     <div class="font-semibold text-slate-900 dark:text-white">{{ Auth::user()->name }}</div>
                                     <div class="text-sm text-slate-500 capitalize">{{ Auth::user()->role }}</div>
                                 </div>

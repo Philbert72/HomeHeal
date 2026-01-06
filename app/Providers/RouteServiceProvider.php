@@ -7,20 +7,13 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
-
-// CRITICAL FIX: Explicitly import the custom Role Middleware class
 use App\Http\Middleware\RoleMiddleware; 
 
 class RouteServiceProvider extends ServiceProvider
 {
-    // ... (rest of the file remains the same)
-
-    /**
-     * Define your route model bindings, pattern filters, and other route configuration.
-     */
     public function boot(): void
     {
-        // Registration using the imported class name
+
         $this->aliasMiddleware('role', RoleMiddleware::class);
 
         RateLimiter::for('api', function (Request $request) {

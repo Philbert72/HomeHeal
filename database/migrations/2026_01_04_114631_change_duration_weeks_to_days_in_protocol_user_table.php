@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::table('protocol_user', function (Blueprint $table) {
             $table->renameColumn('duration_weeks', 'duration_days');
         });
-        
-        // Update existing default if possible, or we just utilize the name change
+
         Schema::table('protocol_user', function (Blueprint $table) {
             $table->integer('duration_days')->default(30)->change();
         });

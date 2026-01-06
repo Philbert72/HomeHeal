@@ -36,15 +36,12 @@ class SessionController extends Controller
     {
         $user = Auth::user();
         
-        // Only patients can log sessions
         if (!$user || $user->role !== 'patient') {
             return redirect()->route('dashboard')->with('error', 'Only patients can log sessions.');
         }
 
-        // Get protocols assigned to this patient
         $allProtocols = $user->protocols()->with('exercises')->get();
 
-        // Filter out protocols already completed TODAY
         $completedProtocolIds = $user->dailySessionLogs()
             ->whereDate('log_date', now()->today())
             ->pluck('protocol_id')
@@ -55,7 +52,6 @@ class SessionController extends Controller
         });
 
         if ($protocols->isEmpty()) {
-            // Check if it's because they are all done, or none assigned
             if ($allProtocols->isNotEmpty()) {
                  return redirect()->route('dashboard')->with('success', 'Great job! You have completed all your assigned protocols for today.');
             }
@@ -74,7 +70,6 @@ class SessionController extends Controller
     {
         $user = Auth::user();
 
-        // Validate
         $validated = $request->validate([
             'protocol_id' => 'required|exists:protocols,id',
             'log_date' => 'required|date|before_or_equal:today',
@@ -83,13 +78,11 @@ class SessionController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        // Verify the protocol is actually assigned to this patient
         $protocol = Protocol::find($validated['protocol_id']);
         if (!$protocol->patients()->where('user_id', $user->id)->exists()) {
             return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
         }
 
-        // Create the session log
         DailySessionLog::create([
             'patient_id' => $user->id,
             'protocol_id' => $validated['protocol_id'],
@@ -108,12 +101,10 @@ class SessionController extends Controller
     {
         $user = Auth::user();
 
-        // Authorization: Ensure the log belongs to the authenticated user
         if ($session->patient_id !== $user->id) {
             abort(403, 'Unauthorized access.');
         }
 
-        // Get protocols for the dropdown (though users usually shouldn't change protocol, it's possible)
         $protocols = $user->protocols()->with('exercises')->get();
 
         return view('sessions.edit', compact('session', 'protocols'));
@@ -138,7 +129,6 @@ class SessionController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        // Verify protocol assignment if changed
         if ($validated['protocol_id'] != $session->protocol_id) {
             $protocol = Protocol::find($validated['protocol_id']);
             if (!$protocol->patients()->where('user_id', $user->id)->exists()) {

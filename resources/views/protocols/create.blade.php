@@ -45,7 +45,6 @@
         <section class="space-y-6">
             <h2 class="text-2xl font-semibold text-slate-800 dark:text-white">2. Exercises & Prescription</h2>
             <div id="exercises-container" class="space-y-6">
-                <!-- Exercise slots will be added here by JavaScript -->
                 @error('exercises') <p class="text-red-500 text-xs mt-1">Protocols must contain at least one exercise.</p> @enderror
             </div>
 
@@ -69,8 +68,6 @@
         const container = document.getElementById('exercises-container');
         const addButton = document.getElementById('add-exercise-btn');
         let exerciseIndex = 0;
-
-        // Exercise list passed from the controller
         const exercises = @json($exercises);
 
         function createExerciseSlot(index) {
@@ -78,8 +75,6 @@
             slot.className = 'bg-slate-50 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 space-y-4 relative';
             slot.dataset.index = index;
 
-            // Template needs to be safe from PHP Blade compilation error. 
-            // We use placeholders for error messages (which are handled by the re-render on validation failure).
             const exerciseSlotHtml = `
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white">Exercise #${index + 1}</h3>
                 
@@ -156,11 +151,8 @@
             slots.forEach((slot, newIndex) => {
                 slot.querySelector('h3').textContent = `Exercise #${newIndex + 1}`;
                 slot.dataset.index = newIndex;
-                
-                // Reindex all input/select names
                 slot.querySelectorAll('[name^="exercises"]').forEach(input => {
                     const currentName = input.getAttribute('name');
-                    // Regex replaces the old index [X] with the new index [Y]
                     const newName = currentName.replace(/\[\d+\]/, `[${newIndex}]`);
                     input.setAttribute('name', newName);
                 });

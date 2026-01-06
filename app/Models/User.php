@@ -17,31 +17,29 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // 'patient' or 'therapist'
+        'role',
         'locale',
         'timezone',
     ];
     protected $hidden = [
         'password',
-        // 'remember_token' is removed since the migration doesn't include it.
     ];
 
     protected $casts = [
-        'password' => 'hashed', // Ensures the password is automatically hashed upon creation/update
+        'password' => 'hashed',
     ];
 
 
     /**
-     * A Therapist user can create many Protocols.
+     * 1 Therapist create many Protocols.
      */
     public function createdProtocols(): HasMany
     {
-        // Links to the 'therapist_id' field on the protocols table
         return $this->hasMany(Protocol::class, 'therapist_id');
     }
 
     /**
-     * A Patient is assigned many Protocols.
+     * 1 Patient assigned many Protocols.
      */
     public function assignedProtocols(): BelongsToMany
     {
@@ -50,38 +48,26 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
-    /**
-     * Scope to return only users with the 'patient' role.
-     */
     public function scopePatient(Builder $query): void
     {
         $query->where('role', 'patient');
     }
 
     /**
-     * A Patient user can have many DailySessionLogs.
+     * 1 Patient have many DailySessionLogs.
      */
     public function dailySessionLogs(): HasMany
     {
-        // Links to the 'patient_id' field on the daily_session_logs table
         return $this->hasMany(DailySessionLog::class, 'patient_id');
     }
 
-    /**
-     * This relationship is used by the PatientDashboard component.
-     */
     public function protocols(): BelongsToMany
     {
-        // Links to Protocol via the 'protocol_user' pivot table.
-        // We use withTimestamps() to access the 'pivot_created_at' in the Livewire component.
         return $this->belongsToMany(Protocol::class, 'protocol_user', 'user_id', 'protocol_id')
                     ->withPivot('duration_days')
                     ->withTimestamps();
     }
 
-    /**
-     * Get the patient's most recent session log.
-     */
     public function latestSessionLog()
     {
         return $this->hasOne(DailySessionLog::class, 'patient_id')->latestOfMany('log_date');

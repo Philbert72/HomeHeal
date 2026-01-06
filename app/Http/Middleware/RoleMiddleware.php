@@ -20,12 +20,10 @@
 
             $user = Auth::user();
 
-            // Check if the user's role is in the list of required roles
             if (in_array($user->role, $roles)) {
                 return $next($request);
             }
             
-            // If the role doesn't match
             abort(403, 'Unauthorized action. Required role: ' . implode(', ', $roles));
         }
     }

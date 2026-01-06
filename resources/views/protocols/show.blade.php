@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="space-y-10">
-    <!-- Header and Navigation -->
+    <!-- Header and Nav -->
     <div class="flex items-start justify-between">
         <div>
             <h1 class="text-5xl font-extrabold text-slate-900 dark:text-white mb-2">{{ $protocol->title }}</h1>
@@ -13,11 +13,9 @@
             <a href="{{ route('protocols.index') }}" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition">← Back to Protocols</a>
             
             @can('update', $protocol)
-                <!-- Therapist Edit Button -->
                 <a href="{{ route('protocols.edit', $protocol) }}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow transition">
                     Edit Protocol
                 </a>
-                <!-- CORRECT: Assignment Button (This uses the working route) -->
                 <a href="{{ route('protocols.assign', $protocol) }}" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition">
                     Assign/Unassign Patients
                 </a>
@@ -27,7 +25,6 @@
 
     <!-- Metadata Section -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-slate-700 dark:text-slate-300 border-t border-b border-slate-200 dark:border-slate-700 py-6">
-        <!-- Created By, Date Created, Status... -->
         <div class="space-y-1">
             <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Created By</p>
             <p class="text-base font-medium">Dr. {{ $protocol->therapist->name }}</p>
@@ -85,7 +82,7 @@
                             <p class="text-lg font-bold text-slate-900 dark:text-white">{{ $exercise->pivot->reps }}</p>
                         </div>
                         
-                        <!-- Resistance (Displaying original unit) -->
+                        <!-- Resistance -->
                         <div class="space-y-1">
                             <p class="text-xs font-medium text-slate-600 dark:text-slate-400">Resistance</p>
                             <p class="text-lg font-bold text-slate-900 dark:text-white">

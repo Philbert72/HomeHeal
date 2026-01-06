@@ -20,9 +20,7 @@ class Exercise extends Model
         'step_by_step_guide',
     ];
 
-    /**
-     * An Exercise belongs to many Protocols.
-     */
+    // 1 Exercise belongs to many Protocols.
     public function protocols(): BelongsToMany
     {
         return $this->belongsToMany(Protocol::class, 'protocol_exercise')

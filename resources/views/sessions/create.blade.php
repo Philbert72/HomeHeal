@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- Fully functional session logging form -->
 <div class="max-w-3xl mx-auto">
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">Log Today's Session</h1>
@@ -226,7 +225,6 @@ function sessionForm() {
     return {
         selectedProtocol: '{{ old('protocol_id') }}',
         updateExercises() {
-            // Exercises update handled by Alpine x-show
         }
     }
 }

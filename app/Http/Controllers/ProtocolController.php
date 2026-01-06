@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Protocol;
 use App\Models\Exercise; 
-use App\Models\User; // CRITICAL: Required for assignment logic
+use App\Models\User;
 use App\Traits\ConvertsUnits; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -144,8 +144,6 @@ class ProtocolController extends Controller
                          ->with('success', 'Protocol "' . $protocolTitle . '" and all associated exercises were successfully deleted.');
     }
 
-    // ----- ASSIGNMENT METHODS -----
-
     /**
      * Show the form/modal for assigning the protocol to patients.
      */
@@ -153,7 +151,6 @@ class ProtocolController extends Controller
     {
         $this->authorize('update', $protocol); 
 
-        // Load all available patients and the patients currently assigned to this protocol
         $allPatients = User::patient()->orderBy('name')->get();
         $assignedPatientIds = $protocol->patients->pluck('id')->toArray();
 
@@ -176,7 +173,6 @@ class ProtocolController extends Controller
         $patientIds = $validated['patients'] ?? [];
         $durationDays = $validated['duration_days'];
 
-        // Prepare pivot data with duration
         $pivotData = [];
         foreach ($patientIds as $id) {
             $pivotData[$id] = ['duration_days' => $durationDays];
@@ -204,7 +200,6 @@ class ProtocolController extends Controller
             'duration_days' => 'required|integer|min:1|max:365',
         ]);
 
-        // Update existing pivot record
         $protocol->patients()->updateExistingPivot($patient->id, [
             'duration_days' => $validated['duration_days'],
         ]);

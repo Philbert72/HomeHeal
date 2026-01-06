@@ -3,7 +3,6 @@
 @section('content')
 <div class="min-h-[calc(100vh-200px)] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <!-- Improved registration form with clearer hierarchy -->
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-slate-900 mb-2">Get Started</h1>
             <p class="text-slate-600">Join HomeHeal today and start tracking your recovery</p>
@@ -40,14 +39,10 @@
                     @error('password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
-                <!-- CRITICAL FIX: ADD PASSWORD CONFIRMATION FIELD -->
                 <div>
                     <label for="password_confirmation" class="block text-sm font-semibold text-slate-900 mb-2">Confirm Password</label>
                     <input id="password_confirmation" name="password_confirmation" type="password" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition placeholder-slate-400">
-                    <!-- Note: The 'confirmed' validation error will appear under the 'password' field -->
                 </div>
-                
-                <!-- NOTE: The 'role' selection has been removed as all new accounts default to 'patient' in the controller. -->
 
                 <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-700 transition shadow-sm mt-6">
                     Create account

@@ -4,8 +4,6 @@
             <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">Therapist Management Hub</h1>
             <p class="text-slate-600 dark:text-slate-400">Welcome back, Dr. {{ $user->name ?? 'Therapist' }}. Here is an overview of your practice.</p>
         </div>
-        
-        <!-- Updated Link: Points to the index page, where the 'Create' button belongs -->
         <a href="{{ route('protocols.index') }}" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition">
             Manage Protocols
         </a>
@@ -34,8 +32,6 @@
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white">Your Protocols</h2>
                 <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Protocols you have designed and assigned to patients.</p>
             </div>
-            
-            <!-- NEW ACTION BUTTON: Direct link to create a new protocol -->
             <a href="{{ route('protocols.create') }}" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg shadow-sm transition text-sm">
                 + Create New Protocol
             </a>

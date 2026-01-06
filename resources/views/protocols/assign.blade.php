@@ -49,7 +49,7 @@
                 <p>Please create patient user accounts before assigning protocols.</p>
             </div>
         @else
-            <!-- Patients List (Checkboxes) -->
+            <!-- Patients List -->
             <div class="space-y-3 max-h-80 overflow-y-auto p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900">
                 @foreach ($allPatients as $patient)
                     <label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">

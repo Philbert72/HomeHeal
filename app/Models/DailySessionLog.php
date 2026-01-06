@@ -16,8 +16,7 @@ class DailySessionLog extends Model
         'difficulty_rating',
         'notes',
     ];
-
-    // Define the data types for casting
+    
     protected $casts = [
         'log_date' => 'date',
         'pain_score' => 'integer',
@@ -36,7 +35,7 @@ class DailySessionLog extends Model
         return $this->belongsTo(Protocol::class, 'protocol_id');
     }
 
-    // Define the media collection for patient feedback videos/photos.
+    // Media collection feedback videos/photos.
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('patient_feedback');

@@ -28,9 +28,6 @@ Route::get('/login', function () {
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 
-
-// AUTHENTICATED APPLICATION ROUTES (Access AFTER Login)
-
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard route
@@ -46,18 +43,12 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/');
     })->name('logout');
 
-
-
-
     // Sessions routes (Patient only)
     Route::get('/sessions', [App\Http\Controllers\SessionController::class, 'index'])->name('sessions.index');
     Route::get('/sessions/create', [App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
     Route::post('/sessions', [App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
     Route::get('/sessions/{session}/edit', [App\Http\Controllers\SessionController::class, 'edit'])->name('sessions.edit');
     Route::put('/sessions/{session}', [App\Http\Controllers\SessionController::class, 'update'])->name('sessions.update');
-
-
-
 
     // RESOURCE ROUTING FOR EXERCISES (Therapist only)
     Route::resource('exercises', App\Http\Controllers\ExerciseController::class);
@@ -72,20 +63,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/patients/{patient}', [App\Http\Controllers\PatientController::class, 'show'])
         ->middleware('role:therapist')
         ->name('patients.show');
-    // RESOURCE ROUTING FOR PROTOCOLS (Secure CRUD Endpoints)
     Route::resource('protocols', ProtocolController::class);
     
-    // --- PROTOCOL ASSIGNMENT ROUTES (FIXED) ---
-    // We apply the 'role' middleware to the individual routes here,
-    // ensuring both 'auth' and 'role:therapist' are required.
+    // --- PROTOCOL ASSIGNMENT ROUTES ---
     Route::prefix('protocols/{protocol}')->group(function () {
         
-        // GET route for the assignment form
         Route::get('assign', [ProtocolController::class, 'assign'])
              ->middleware('role:therapist')
              ->name('protocols.assign');
         
-        // POST route for processing the form submission
         Route::post('assign', [ProtocolController::class, 'processAssignment'])
              ->middleware('role:therapist')
              ->name('protocols.processAssignment');

@@ -13,7 +13,6 @@ class PatientDashboard extends Component
     public $user;
     public $averagePainScore = 0;
     public $sessionsCompleted = 0;
-    // public $currentProtocol = null; // Removed in favor of checklist
     public $dailyChecklist = [];
     public $recentSessions = [];
     public $painChartData = [];
@@ -35,10 +34,8 @@ class PatientDashboard extends Component
 
     private function loadMetrics()
     {
-        // 1. Calculate Sessions Completed
         $this->sessionsCompleted = $this->user->dailySessionLogs()->count();
 
-        // 2. Calculate Average Pain Score (Last 30 days)
         $last30DaysLogs = $this->user->dailySessionLogs()
                                      ->where('log_date', '>=', now()->subDays(30))
                                      ->get();
@@ -50,23 +47,19 @@ class PatientDashboard extends Component
 
     private function loadDailyChecklist()
     {
-        // Fetch all assigned protocols with pivot data
         $allProtocols = $this->user->protocols()->with('therapist')->get();
         
         $checklist = [];
 
         foreach ($allProtocols as $protocol) {
             $assignedAt = $protocol->pivot->created_at;
-            $durationDays = $protocol->pivot->duration_days ?? 30; // Default to 30 days if null
-            
-            // Calculate end date
+            $durationDays = $protocol->pivot->duration_days ?? 30;
+
             $endDate = $assignedAt->copy()->addDays($durationDays);
 
-            // Check if active (today is before or equal to end date)
             $isActive = now()->startOfDay()->lte($endDate->endOfDay());
 
             if ($isActive) {
-                // Check if completed today
                 $completedToday = $this->user->dailySessionLogs()
                     ->where('protocol_id', $protocol->id)
                     ->whereDate('log_date', now()->today())
@@ -87,7 +80,6 @@ class PatientDashboard extends Component
 
     private function loadRecentSessions()
     {
-        // Get the 5 most recent session logs
         $this->recentSessions = $this->user->dailySessionLogs()
                                            ->with('protocol')
                                            ->latest('log_date')
@@ -97,7 +89,6 @@ class PatientDashboard extends Component
 
     private function loadChartData()
     {
-        // Pain Score Chart Data (Last 30 days)
         $painLogs = $this->user->dailySessionLogs()
                                ->where('log_date', '>=', now()->subDays(30))
                                ->orderBy('log_date')
@@ -108,18 +99,16 @@ class PatientDashboard extends Component
             'data' => $painLogs->pluck('pain_score')->toArray(),
         ];
 
-        // Session Frequency (Last 8 weeks, grouped by week)
         $weeklyData = $this->user->dailySessionLogs()
                                  ->where('log_date', '>=', now()->subWeeks(8))
                                  ->get()
                                  ->groupBy(function($session) {
-                                     return $session->log_date->format('Y-W'); // Group by year-week
+                                     return $session->log_date->format('Y-W');
                                  })
                                  ->map(function($group) {
                                      return $group->count();
                                  });
 
-        // Generate last 8 weeks labels
         $weekLabels = [];
         $weekCounts = [];
         for ($i = 7; $i >= 0; $i--) {
@@ -134,7 +123,6 @@ class PatientDashboard extends Component
             'data' => $weekCounts,
         ];
 
-        // Difficulty Trend Chart (Last 30 days)
         $difficultyLogs = $this->user->dailySessionLogs()
                                      ->where('log_date', '>=', now()->subDays(30))
                                      ->orderBy('log_date')
@@ -148,7 +136,6 @@ class PatientDashboard extends Component
 
     public function render()
     {
-        // This links to the component view file
         return view('livewire.patient-dashboard');
     }
 }

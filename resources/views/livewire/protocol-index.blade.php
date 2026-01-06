@@ -1,5 +1,5 @@
 <div>
-    <!-- Success/Error Message Display -->
+    <!-- Message Display -->
     @if (session('success'))
         <div class="bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded relative mb-6" role="alert">
             <strong class="font-bold">Success!</strong>
@@ -26,7 +26,6 @@
         </div>
         
         <div class="flex gap-2">
-            <!-- Therapist action button -->
             @if ($isTherapist)
                 <a href="{{ route('protocols.create') }}" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg shadow-sm transition text-sm">
                     + Create New Protocol
@@ -35,7 +34,7 @@
         </div>
     </div>
 
-    <!-- Search and Filter Controls (Therapist only) -->
+    <!-- Search Filter for Therapist -->
     @if ($isTherapist)
         <div class="mt-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
             <div class="flex flex-col sm:flex-row gap-3">
@@ -61,25 +60,19 @@
         </div>
     @endif
 
-    <!-- Protocol Cards Grid -->
+    <!-- Protocol Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
 
         @forelse ($protocols as $protocol)
             @php
-                // Logic for status color and text (simplified for now)
                 $status = $protocol->pivot ? 'Active' : 'Created';
                 $statusColor = $protocol->pivot ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300' : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300';
                 $iconColor = $protocol->pivot ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400';
                 $buttonColor = $protocol->pivot ? 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300' : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300';
-
-                // Get therapist's initials for the placeholder circle
                 $therapist = $protocol->therapist;
                 $initials = strtoupper(substr($therapist->name, 0, 1) . substr(strrchr($therapist->name, ' '), 1, 1));
-                
-                // Mock progress for patient view (since actual progress requires session logs)
                 $progress = 0; 
                 if (!$isTherapist) {
-                    // Placeholder logic: 65% if assigned, 0% if just created
                     $progress = $protocol->pivot ? 65 : 0; 
                     $status = $protocol->pivot ? 'Active' : 'Pending Start';
                 } else {
@@ -138,12 +131,9 @@
                         @endif
                     </span>
                     <div class="flex items-center gap-4">
-                        <!-- Therapist Edit Link -->
                         @if ($isTherapist)
                             <a href="{{ route('protocols.edit', $protocol) }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">Edit</a>
                         @endif
-                        
-                        <!-- All users can view details -->
                         <a href="{{ route('protocols.show', $protocol) }}" class="text-sm font-semibold {{ $buttonColor }} hover:underline">
                             View Details →
                         </a>

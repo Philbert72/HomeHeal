@@ -10,5 +10,4 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Force class-based dark mode */
 @custom-variant dark (&:where(.dark, .dark *));

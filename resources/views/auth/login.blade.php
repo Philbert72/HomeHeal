@@ -35,7 +35,7 @@
                     @enderror
                 </div>
 
-                <!-- Password with visibility toggle -->
+                <!-- Password -->
                 <div>
                     <label for="password" class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Password</label>
                     <div class="relative" x-data="{ showPassword: false }">

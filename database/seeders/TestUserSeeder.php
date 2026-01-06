@@ -16,28 +16,21 @@ class TestUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // --- Create Users ---
-        
-        // Therapist user with known credentials
+        // Create Users
         $therapist = User::factory()->therapist()->create([
             'name' => 'Dr. Therapist',
             'email' => 'therapist@homeheal.com',
             'password' => Hash::make('password'),
         ]);
-
-        // Regular Patient user with known credentials
         $patient = User::factory()->patient()->create([
             'name' => 'Jane Patient',
             'email' => 'patient@homeheal.com',
             'password' => Hash::make('password'),
         ]);
-
-        // 5 random patients
         $otherPatients = User::factory(5)->patient()->create();
 
 
-        // --- Create Exercises ---
-        
+        // Create Exercises 
         $exercises = [
             Exercise::factory()->create(['name' => 'Quad Set', 'instructions' => 'Tighten your thigh muscles and push the back of your knee down into the floor. Hold for 5 seconds and release. This exercise helps strengthen the quadriceps muscle.']),
             Exercise::factory()->create(['name' => 'Straight Leg Raise', 'instructions' => 'Lie on your back with one leg bent. Keep the other leg straight and lift it 6-12 inches off the ground. Hold for 3 seconds, then slowly lower. Repeat 10-15 times.']),
@@ -50,35 +43,26 @@ class TestUserSeeder extends Seeder
         ];
 
 
-        // --- Create Protocols ---
-        
-        // Protocol 1: Knee Rehabilitation - Post Surgery
+        // Create Protocols
         $protocol1 = Protocol::create([
             'therapist_id' => $therapist->id,
             'title' => 'Knee Rehabilitation - Post Surgery Phase 1',
             'description' => 'Initial recovery protocol for patients recovering from knee surgery. Focus on reducing swelling, regaining range of motion, and beginning gentle strengthening.',
         ]);
-
-        // Attach exercises to protocol 1  
         $protocol1->exercises()->attach([
             $exercises[0]->id => ['sets' => 3, 'reps' => 10, 'resistance_amount' => 0, 'rest_seconds' => 30, 'resistance_original_unit' => 'g'],
             $exercises[1]->id => ['sets' => 2, 'reps' => 10, 'resistance_amount' => 0, 'rest_seconds' => 45, 'resistance_original_unit' => 'g'],
             $exercises[3]->id => ['sets' => 3, 'reps' => 15, 'resistance_amount' => 0, 'rest_seconds' => 20, 'resistance_original_unit' => 'g'],
             $exercises[4]->id => ['sets' => 5, 'reps' => 20, 'resistance_amount' => 0, 'rest_seconds' => 15, 'resistance_original_unit' => 'g'],
         ]);
-
-        // Protocol 2: Shoulder Strengthening
         $protocol2 = Protocol::create([
             'therapist_id' => $therapist->id,
             'title' => 'Shoulder Strengthening & Mobility',
             'description' => 'Progressive shoulder rehabilitation program focused on restoring strength and range of motion after rotator cuff injury.',
         ]);
-
         $protocol2->exercises()->attach([
             $exercises[2]->id => ['sets' => 3, 'reps' => 12, 'resistance_amount' => 2268, 'rest_seconds' => 60, 'resistance_original_unit' => 'kg'], // 2.268 kg = 5 lbs band
         ]);
-
-        // Protocol 3: General Lower Body Strength
         $protocol3 = Protocol::create([
             'therapist_id' => $therapist->id,
             'title' => 'Lower Body Strength & Conditioning',
@@ -92,15 +76,10 @@ class TestUserSeeder extends Seeder
         ]);
 
 
-        // --- Assign Protocols to Patients ---
-        
-        // Assign Protocol 1 to main test patient
+        // Assign Protocols to Patients
         $protocol1->patients()->attach($patient->id);
-        
-        // Assign Protocol 3 to main test patient
         $protocol3->patients()->attach($patient->id);
 
-        // Assign protocols to random patients
         foreach ($otherPatients as $index => $otherPatient) {
             if ($index % 2 == 0) {
                 $protocol1->patients()->attach($otherPatient->id);
@@ -110,31 +89,25 @@ class TestUserSeeder extends Seeder
         }
 
 
-        // --- Create Session Logs for Test Patient (30 days of history) ---
-        
-        // Generate realistic session data showing recovery progression
+        // Create Session Logs
         for ($daysAgo = 29; $daysAgo >= 0; $daysAgo--) {
-            // Skip some days to make it realistic (patient doesn't log every single day)
             if ($daysAgo % 4 == 0 || $daysAgo % 7 == 6) {
-                continue; // Skip Sundays-ish and some random days
+                continue; 
             }
 
             $logDate = now()->subDays($daysAgo);
 
-            // Pain score shows improvement over time (starts high, decreases)
-            // Early days: 6-8 pain, gradually reducing to 2-4
             if ($daysAgo > 20) {
                 $painScore = rand(6, 8);
-                $difficulty = rand(4, 5); // Hard at first
+                $difficulty = rand(4, 5);
             } elseif ($daysAgo > 10) {
                 $painScore = rand(4, 6);
-                $difficulty = rand(3, 4); // Getting easier
+                $difficulty = rand(3, 4);
             } else {
                 $painScore = rand(2, 4);
-                $difficulty = rand(2, 3); // Much easier now
+                $difficulty = rand(2, 3);
             }
 
-            // Alternate between the two protocols
             $protocolId = ($daysAgo % 2 == 0) ? $protocol1->id : $protocol3->id;
 
             $notes = [
@@ -146,7 +119,7 @@ class TestUserSeeder extends Seeder
                 'Great session, feeling stronger.',
                 'Slight pain but pushed through.',
                 'Best session yet!',
-                null, // Some sessions without notes
+                null,
                 null,
             ];
 
