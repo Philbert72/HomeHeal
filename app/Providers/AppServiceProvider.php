@@ -3,43 +3,29 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Livewire\Livewire; 
-use Illuminate\Routing\Router;
-
-use App\Models\Protocol;
-use App\Models\DailySessionLog;
-use App\Policies\ProtocolPolicy;
-use App\Policies\DailySessionLogPolicy;
-
-use App\Livewire\PatientDashboard;
-use App\Livewire\TherapistDashboard;
-use App\Livewire\ProtocolIndex;
-
-use App\Http\Middleware\RoleMiddleware; 
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
-    protected $policies = [
-        Protocol::class => ProtocolPolicy::class,
-        DailySessionLog::class => DailySessionLogPolicy::class
-    ];
-
+    /**
+     * Register any application services.
+     */
     public function register(): void
     {
         //
     }
 
-    public function boot(Router $router): void
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
     {
-        foreach ($this->policies as $model => $policy) {
-            Gate::policy($model, $policy);
+        /**
+         * Force HTTPS for all generated URLs when running in production or on Vercel.
+         * This prevents "Mixed Content" errors where the browser blocks HTTP assets on an HTTPS site.
+         */
+        if (config('app.env') === 'production' || env('VERCEL')) {
+            URL::forceScheme('https');
         }
-        
-        $router->aliasMiddleware('role', RoleMiddleware::class);
-        
-        Livewire::component('patient-dashboard', PatientDashboard::class);
-        Livewire::component('therapist-dashboard', TherapistDashboard::class);
-        Livewire::component('protocol-index', ProtocolIndex::class);
     }
 }
