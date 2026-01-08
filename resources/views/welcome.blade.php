@@ -10,7 +10,7 @@
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
         <div class="text-center space-y-8">
-            <!-- Logo -->
+            <!-- Logo Badge -->
             <div class="inline-flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-emerald-100 dark:border-emerald-900">
                 <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                     <span class="text-white font-bold">H</span>
@@ -47,9 +47,10 @@
         <div class="grid md:grid-cols-2 gap-8">
             <!-- For Patients -->
             <div class="group bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800 rounded-3xl p-8 border border-emerald-100 dark:border-emerald-900 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                <!-- UPDATED: Activity/Pulse icon for rehab context -->
                 <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">For Patients</h3>

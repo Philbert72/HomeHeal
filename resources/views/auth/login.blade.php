@@ -75,7 +75,8 @@
                     Sign in
                 </button>
 
-                <a href="{{ route('register') }}" class="w-full py-2.5 border-2 border-slate-300 text-slate-900 font-semibold rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition text-center block">
+                <!-- Create Account Button -->
+                <a href="{{ route('register') }}" class="w-full py-2.5 border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 font-semibold rounded-lg hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-slate-700 transition text-center block">
                     Create account
                 </a>
             </form>
