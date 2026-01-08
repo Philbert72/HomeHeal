@@ -20,12 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        /**
-         * Force HTTPS for all generated URLs when running in production or on Vercel.
-         * This prevents "Mixed Content" errors where the browser blocks HTTP assets on an HTTPS site.
-         */
-        if (config('app.env') === 'production' || env('VERCEL')) {
-            URL::forceScheme('https');
+        
+        URL::forceScheme('https');
+
+        if (!empty(config('app.url'))) {
+            URL::forceRootUrl(config('app.url'));
         }
     }
 }
