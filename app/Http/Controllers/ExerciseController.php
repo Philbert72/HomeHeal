@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exercise;
+use Illuminate\Container\Attributes\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,12 +49,8 @@ class ExerciseController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
-        if (!Auth::user() || Auth::user()->role !== 'therapist') {
-            return redirect()->route('dashboard')->with('error', 'Access denied.');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'instructions' => 'required|string',
@@ -64,10 +61,10 @@ class ExerciseController extends Controller
             'step_by_step_guide' => 'nullable|string',
         ]);
 
-        // Handle image upload
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('exercises', 'public');
-            $validated['image_path'] = $imagePath;
+            // Save to storage/app/public/exercises
+            $path = $request->file('image')->store('exercises', 'public');
+            $validated['image_path'] = $path;
         }
 
         Exercise::create($validated);
@@ -100,10 +97,6 @@ class ExerciseController extends Controller
      */
     public function update(Request $request, Exercise $exercise)
     {
-        if (!Auth::user() || Auth::user()->role !== 'therapist') {
-            return redirect()->route('dashboard')->with('error', 'Access denied.');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'instructions' => 'required|string',
@@ -114,19 +107,19 @@ class ExerciseController extends Controller
             'step_by_step_guide' => 'nullable|string',
         ]);
 
-        // Handle image upload
         if ($request->hasFile('image')) {
-            // Delete old image if exists
+            // Delete old image if it exists
             if ($exercise->image_path) {
-                \Storage::disk('public')->delete($exercise->image_path);
+                Storage::disk('public')->delete($exercise->image_path);
             }
-            $imagePath = $request->file('image')->store('exercises', 'public');
-            $validated['image_path'] = $imagePath;
+            
+            $path = $request->file('image')->store('exercises', 'public');
+            $validated['image_path'] = $path;
         }
 
         $exercise->update($validated);
 
-        return redirect()->route('exercises.index')->with('success', 'Exercise updated successfully!');
+        return redirect()->route('exercises.show', $exercise)->with('success', 'Exercise updated successfully!');
     }
 
     /**
@@ -134,13 +127,12 @@ class ExerciseController extends Controller
      */
     public function destroy(Exercise $exercise)
     {
-        if (!Auth::user() || Auth::user()->role !== 'therapist') {
-            return redirect()->route('dashboard')->with('error', 'Access denied.');
+        // Delete image file before deleting record
+        if ($exercise->image_path) {
+            Storage::disk('public')->delete($exercise->image_path);
         }
-
-        $exerciseName = $exercise->name;
+        
         $exercise->delete();
-
-        return redirect()->route('exercises.index')->with('success', "Exercise \"$exerciseName\" deleted successfully!");
+        return redirect()->route('exercises.index')->with('success', 'Exercise deleted successfully!');
     }
 }
