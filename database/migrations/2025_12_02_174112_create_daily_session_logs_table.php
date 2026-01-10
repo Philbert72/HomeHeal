@@ -22,9 +22,6 @@ return new class extends Migration
             $table->smallInteger('pain_score');
             $table->smallInteger('difficulty_rating');
             $table->text('notes')->nullable();
-
-            // Add a unique constraint to prevent duplicate logs for the same day
-            $table->unique(['patient_id', 'protocol_id', 'log_date']);
         });
     }
 
