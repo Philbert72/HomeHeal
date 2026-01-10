@@ -20,7 +20,7 @@ class SessionController extends Controller
     {
         $user = Auth::user();
         
-        // Only patients should access this index directly
+        // Ensure only patients access their own logs
         if (!$user || $user->role !== 'patient') {
             abort(403, 'Unauthorized access.');
         }
@@ -39,15 +39,17 @@ class SessionController extends Controller
      */
     public function create(Request $request)
     {
+        // Use your DailySessionLogPolicy 'create' method
         $this->authorize('create', DailySessionLog::class);
 
         $user = Auth::user();
         
         // Get all protocols assigned to this patient
+        // Ensure the protocols() relationship is defined in User.php
         $allProtocols = $user->protocols()->with('exercises')->get();
 
         // Filter out protocols that have already been logged today
-        // This prevents duplicate entries for the same exercise set
+        // This prevents the 500 error caused by duplicate unique constraint violations
         $today = now()->format('Y-m-d');
         $completedProtocolIds = $user->dailySessionLogs()
             ->whereDate('log_date', $today)
@@ -58,7 +60,7 @@ class SessionController extends Controller
             return in_array($protocol->id, $completedProtocolIds);
         });
 
-        // Redirect if no work is left to do today
+        // Redirect if the patient has finished their tasks for today
         if ($protocols->isEmpty()) {
             if ($allProtocols->isNotEmpty()) {
                  return redirect()->route('dashboard')->with('success', 'Great job! You have completed all your assigned protocols for today.');
@@ -88,7 +90,7 @@ class SessionController extends Controller
 
         $user = Auth::user();
 
-        // Double check the assignment for security (Patient must be linked to the protocol)
+        // 1. Security Check: Verify patient is actually assigned to this protocol
         $isAssigned = DB::table('protocol_user')
             ->where('protocol_id', $validated['protocol_id'])
             ->where('user_id', $user->id)
@@ -98,7 +100,7 @@ class SessionController extends Controller
             return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
         }
 
-        // Prevent double-logging in case of rapid clicks or refreshing
+        // 2. Prevent Double Logging (Final safety check)
         $alreadyLogged = DailySessionLog::where('patient_id', $user->id)
             ->where('protocol_id', $validated['protocol_id'])
             ->whereDate('log_date', $validated['log_date'])
@@ -108,6 +110,7 @@ class SessionController extends Controller
             return redirect()->route('dashboard')->with('error', 'You have already logged a session for this protocol today.');
         }
 
+        // 3. Save the log
         DailySessionLog::create([
             'patient_id' => $user->id,
             'protocol_id' => $validated['protocol_id'],
@@ -125,10 +128,11 @@ class SessionController extends Controller
      */
     public function edit(DailySessionLog $session)
     {
+        // Use DailySessionLogPolicy 'update' method
         $this->authorize('update', $session);
 
         $user = Auth::user();
-        $protocols = $user->protocols()->with('exercises')->get();
+        $protocols = $user->protocols()->get();
 
         return view('sessions.edit', compact('session', 'protocols'));
     }
@@ -148,6 +152,7 @@ class SessionController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
+        // Security check if switching protocols
         if ($validated['protocol_id'] != $session->protocol_id) {
             $isAssigned = DB::table('protocol_user')
                 ->where('protocol_id', $validated['protocol_id'])

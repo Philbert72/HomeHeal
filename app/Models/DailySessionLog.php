@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailySessionLog extends Model
 {
@@ -18,7 +19,9 @@ class DailySessionLog extends Model
     ];
     
     protected $casts = [
-        'log_date' => 'date', // Ensures Carbon instances are used
+        'log_date' => 'date',
+        'pain_score' => 'integer',
+        'difficulty_rating' => 'integer',
     ];
 
     public function patient()

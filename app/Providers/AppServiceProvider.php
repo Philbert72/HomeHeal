@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\DailySessionLog;
+use App\Models\Protocol;
+use App\Policies\DailySessionLogPolicy;
+use App\Policies\ProtocolPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 
@@ -20,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        Gate::policy(Protocol::class, ProtocolPolicy::class);
+        Gate::policy(DailySessionLog::class, DailySessionLogPolicy::class);
         
         URL::forceScheme('https');
 
