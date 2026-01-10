@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
+use Illuminate\Database\QueryException;
+
 class SessionController extends Controller
 {
     use AuthorizesRequests;
@@ -111,14 +113,24 @@ class SessionController extends Controller
         }
 
         // 3. Save the log
-        DailySessionLog::create([
-            'patient_id' => $user->id,
-            'protocol_id' => $validated['protocol_id'],
-            'log_date' => $validated['log_date'],
-            'pain_score' => $validated['pain_score'],
-            'difficulty_rating' => $validated['difficulty_rating'],
-            'notes' => $validated['notes'],
-        ]);
+        try {
+            DailySessionLog::create([
+                'patient_id' => $user->id,
+                'protocol_id' => $validated['protocol_id'],
+                'log_date' => $validated['log_date'],
+                'pain_score' => $validated['pain_score'],
+                'difficulty_rating' => $validated['difficulty_rating'],
+                'notes' => $validated['notes'],
+            ]);
+        } catch (QueryException $e) {
+            // Check if the error is for a duplicate entry
+            $errorCode = $e->errorInfo[1];
+            if ($errorCode == 23000 || $errorCode == 23505) { // Duplicate entry error codes for MySQL and PostgreSQL
+                return redirect()->route('dashboard')->with('error', 'You have already logged a session for this protocol today.');
+            }
+            // Re-throw the exception if it's not a duplicate entry error
+            throw $e;
+        }
 
         return redirect()->route('dashboard')->with('success', 'Session logged successfully!');
     }

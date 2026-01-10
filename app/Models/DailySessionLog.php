@@ -24,12 +24,18 @@ class DailySessionLog extends Model
         'difficulty_rating' => 'integer',
     ];
 
-    public function patient()
+    /**
+     * A session log belongs to one patient.
+     */
+    public function patient(): BelongsTo
     {
         return $this->belongsTo(User::class, 'patient_id');
     }
 
-    public function protocol()
+    /**
+     * A session log belongs to one protocol.
+     */
+    public function protocol(): BelongsTo
     {
         return $this->belongsTo(Protocol::class, 'protocol_id');
     }
