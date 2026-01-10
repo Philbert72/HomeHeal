@@ -5,41 +5,48 @@ namespace App\Http\Controllers;
 use App\Models\Protocol;
 use App\Models\Exercise; 
 use App\Models\User;
-use App\Traits\ConvertsUnits; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProtocolController extends Controller
 {
-    use ConvertsUnits;
+    use AuthorizesRequests;
 
-    // Helper to check if user is therapist
-    protected function checkTherapist() {
-        if (Auth::user()->role !== 'therapist') {
-            abort(403, 'Only therapists can perform this action.');
-        }
-    }
-
+    /**
+     * Display a listing of the protocols.
+     */
     public function index()
     {
-        $this->checkTherapist();
-        $protocols = Auth::user()->createdProtocols()->with('exercises')->paginate(10);
+        $this->authorize('viewAny', Protocol::class);
+        
+        $protocols = Auth::user()->createdProtocols()
+            ->with('exercises')
+            ->latest()
+            ->paginate(10);
+            
         return view('protocols.index', compact('protocols'));
     }
 
+    /**
+     * Show the form for creating a new protocol.
+     */
     public function create()
     {
-        $this->checkTherapist();
+        $this->authorize('create', Protocol::class);
         $exercises = Exercise::all();
         return view('protocols.create', compact('exercises'));
     }
 
+    /**
+     * Store a newly created protocol.
+     */
     public function store(Request $request)
     {
-        $this->checkTherapist();
-        // ... (rest of store logic stays same)
+        $this->authorize('create', Protocol::class);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -47,62 +54,62 @@ class ProtocolController extends Controller
             'exercises.*.exercise_id' => ['required', 'exists:exercises,id'],
             'exercises.*.sets' => 'required|integer|min:1',
             'exercises.*.reps' => 'required|integer|min:1',
-            'exercises.*.resistance_value' => 'nullable|numeric|min:0',
-            'exercises.*.resistance_unit' => [
-                'required_with:exercises.*.resistance_value', 
-                Rule::in(['g', 'kg', 'lb', 'm', 'ft', 'cm'])
-            ],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $request) {
             $protocol = Protocol::create([
                 'therapist_id' => Auth::id(),
                 'title' => $validated['title'],
                 'description' => $validated['description'],
             ]);
-            $pivotData = $this->preparePivotData($validated['exercises']);
+
+            $pivotData = [];
+            foreach ($validated['exercises'] as $ex) {
+                $pivotData[$ex['exercise_id']] = [
+                    'sets' => $ex['sets'],
+                    'reps' => $ex['reps'],
+                    'resistance_amount' => 0, // Simplified for now
+                    'resistance_original_unit' => 'g',
+                    'rest_seconds' => 60, 
+                ];
+            }
+
             $protocol->exercises()->sync($pivotData);
         });
 
-        return redirect()->route('protocols.index')->with('success', 'Protocol created.');
+        return redirect()->route('protocols.index')->with('success', 'Protocol created successfully.');
     }
 
+    /**
+     * Display the specified protocol.
+     */
     public function show(Protocol $protocol)
     {
+        $this->authorize('view', $protocol);
         $protocol->load(['exercises', 'therapist', 'patients']); 
         return view('protocols.show', compact('protocol'));
     }
 
-    public function edit(Protocol $protocol)
-    {
-        $this->checkTherapist();
-        $protocol->load('exercises');
-        $exercises = Exercise::all();
-        return view('protocols.edit', compact('protocol', 'exercises'));
-    }
-
-    public function update(Request $request, Protocol $protocol)
-    {
-        $this->checkTherapist();
-        // ... (validation and update logic)
-        $protocol->update($request->only('title', 'description'));
-        $pivotData = $this->preparePivotData($request->exercises ?? []);
-        $protocol->exercises()->sync($pivotData);
-        
-        return redirect()->route('protocols.index')->with('success', 'Protocol updated.');
-    }
-
+    /**
+     * Show the form for assigning the protocol to patients.
+     */
     public function assign(Protocol $protocol)
     {
-        $this->checkTherapist();
-        $allPatients = User::patient()->orderBy('name')->get();
+        $this->authorize('update', $protocol); 
+
+        // Use the scope defined in your User model
+        $allPatients = User::where('role', 'patient')->orderBy('name')->get();
         $assignedPatientIds = $protocol->patients->pluck('id')->toArray();
+
         return view('protocols.assign', compact('protocol', 'allPatients', 'assignedPatientIds'));
     }
 
+    /**
+     * Handle the assignment logic.
+     */
     public function processAssignment(Request $request, Protocol $protocol)
     {
-        $this->checkTherapist();
+        $this->authorize('update', $protocol);
 
         $validated = $request->validate([
             'patients' => 'nullable|array',
@@ -115,33 +122,25 @@ class ProtocolController extends Controller
 
         $pivotData = [];
         foreach ($patientIds as $id) {
+            // This maps the duration_days to the pivot table
             $pivotData[$id] = ['duration_days' => $durationDays];
         }
 
+        // Sync updates the list and saves the duration_days
         $protocol->patients()->sync($pivotData);
 
-        return redirect()->route('protocols.show', $protocol)->with('success', 'Protocol assigned successfully.');
+        return redirect()->route('protocols.show', $protocol)
+            ->with('success', 'Protocol assignment updated successfully.');
     }
 
+    /**
+     * Remove the protocol.
+     */
     public function destroy(Protocol $protocol)
     {
-        $this->checkTherapist();
+        $this->authorize('delete', $protocol);
         $protocol->delete();
-        return redirect()->route('protocols.index')->with('success', 'Protocol deleted.');
-    }
 
-    protected function preparePivotData(array $exerciseDataArray): array
-    {
-        $pivotData = [];
-        foreach ($exerciseDataArray as $exerciseData) {
-            $pivotData[$exerciseData['exercise_id']] = [
-                'sets' => $exerciseData['sets'],
-                'reps' => $exerciseData['reps'],
-                'resistance_amount' => $exerciseData['resistance_value'] ?? 0, 
-                'resistance_original_unit' => $exerciseData['resistance_unit'] ?? 'g',
-                'rest_seconds' => 60, 
-            ];
-        }
-        return $pivotData;
+        return redirect()->route('protocols.index')->with('success', 'Protocol deleted.');
     }
 }
