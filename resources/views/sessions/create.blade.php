@@ -97,6 +97,17 @@
                 </div>
             </div>
 
+            <div>
+                <label for="notes" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Session Notes</label>
+                <textarea 
+                    id="notes" 
+                    name="notes" 
+                    rows="4" 
+                    class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 dark:text-white outline-none transition resize-none"
+                    placeholder="Describe how you felt, any challenges, or improvements."
+                >{{ old('notes') }}</textarea>
+            </div>
+
             <div class="flex gap-4 pt-6">
                 <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-700 transition shadow-sm">
                     Complete Session

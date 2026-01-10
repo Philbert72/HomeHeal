@@ -121,7 +121,7 @@ class SessionController extends Controller
                 'log_date' => $validated['log_date'],
                 'pain_score' => $validated['pain_score'],
                 'difficulty_rating' => $validated['difficulty_rating'],
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
     
             return redirect()->route('dashboard')->with('success', 'Session logged successfully!');
