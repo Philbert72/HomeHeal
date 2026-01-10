@@ -45,6 +45,10 @@ class SessionController extends Controller
         $this->authorize('create', DailySessionLog::class);
 
         $user = Auth::user();
+
+        if ($user->role !== 'patient') {
+            abort(403, 'Unauthorized access. User is not a patient.');
+        }
         
         // Get all protocols assigned to this patient
         // Ensure the protocols() relationship is defined in User.php

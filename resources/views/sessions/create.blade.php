@@ -112,7 +112,7 @@
 <script>
 function sessionForm() {
     return {
-        selectedProtocol: '{{ old('protocol_id', $selectedProtocolId ?? '') }}',
+        selectedProtocol: '{{ old('protocol_id') ?? $selectedProtocolId ?? '' }}',
     }
 }
 </script>
