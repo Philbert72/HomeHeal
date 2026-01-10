@@ -6,69 +6,52 @@ use App\Models\DailySessionLog;
 use App\Models\Protocol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SessionController extends Controller
 {
-    /**
-     * Display a listing of the patient's session logs.
-     */
+    use AuthorizesRequests;
+
     public function index()
     {
         $user = Auth::user();
-        
-        if (!$user || $user->role !== 'patient') {
-            abort(403, 'Unauthorized access.');
-        }
+        if ($user->role !== 'patient') abort(403);
 
         $sessions = $user->dailySessionLogs()
             ->with('protocol')
-            ->orderBy('log_date', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->latest('log_date')
             ->paginate(10);
 
         return view('sessions.index', compact('sessions'));
     }
 
-    /**
-     * Show the form for creating a new session.
-     */
     public function create(Request $request)
     {
-        $user = Auth::user();
-        
-        if (!$user || $user->role !== 'patient') {
-            return redirect()->route('dashboard')->with('error', 'Only patients can log sessions.');
-        }
+        // 1. Check Policy
+        $this->authorize('create', DailySessionLog::class);
 
+        $user = Auth::user();
         $allProtocols = $user->protocols()->with('exercises')->get();
 
+        // 2. Filter out protocols already logged today
         $completedProtocolIds = $user->dailySessionLogs()
-            ->whereDate('log_date', now()->today())
+            ->whereDate('log_date', now()->format('Y-m-d'))
             ->pluck('protocol_id')
             ->toArray();
 
-        $protocols = $allProtocols->reject(function ($protocol) use ($completedProtocolIds) {
-            return in_array($protocol->id, $completedProtocolIds);
-        });
+        $protocols = $allProtocols->reject(fn($p) => in_array($p->id, $completedProtocolIds));
 
         if ($protocols->isEmpty()) {
-            if ($allProtocols->isNotEmpty()) {
-                 return redirect()->route('dashboard')->with('success', 'Great job! You have completed all your assigned protocols for today.');
-            }
-            return redirect()->route('dashboard')->with('error', 'No active protocols assigned. Please contact your therapist.');
+            return redirect()->route('dashboard')->with('success', 'You have completed all protocols for today!');
         }
 
         $selectedProtocolId = $request->query('protocol_id');
-
         return view('sessions.create', compact('protocols', 'selectedProtocolId'));
     }
 
-    /**
-     * Store a newly created session in storage.
-     */
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $this->authorize('create', DailySessionLog::class);
 
         $validated = $request->validate([
             'protocol_id' => 'required|exists:protocols,id',
@@ -78,7 +61,10 @@ class SessionController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $protocol = Protocol::find($validated['protocol_id']);
+        $user = Auth::user();
+        $protocol = Protocol::findOrFail($validated['protocol_id']);
+
+        // Security check: Ensure patient is actually assigned to this protocol
         if (!$protocol->patients()->where('user_id', $user->id)->exists()) {
             return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
         }
@@ -94,32 +80,17 @@ class SessionController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Session logged successfully!');
     }
-    /**
-     * Show the form for editing the specified session.
-     */
+
     public function edit(DailySessionLog $session)
     {
-        $user = Auth::user();
-
-        if ($session->patient_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
-        }
-
-        $protocols = $user->protocols()->with('exercises')->get();
-
+        $this->authorize('update', $session);
+        $protocols = Auth::user()->protocols;
         return view('sessions.edit', compact('session', 'protocols'));
     }
 
-    /**
-     * Update the specified session in storage.
-     */
     public function update(Request $request, DailySessionLog $session)
     {
-        $user = Auth::user();
-
-        if ($session->patient_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
-        }
+        $this->authorize('update', $session);
 
         $validated = $request->validate([
             'protocol_id' => 'required|exists:protocols,id',
@@ -129,15 +100,7 @@ class SessionController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        if ($validated['protocol_id'] != $session->protocol_id) {
-            $protocol = Protocol::find($validated['protocol_id']);
-            if (!$protocol->patients()->where('user_id', $user->id)->exists()) {
-                return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
-            }
-        }
-
         $session->update($validated);
-
-        return redirect()->route('dashboard')->with('success', 'Session log updated successfully!');
+        return redirect()->route('sessions.index')->with('success', 'Log updated.');
     }
 }

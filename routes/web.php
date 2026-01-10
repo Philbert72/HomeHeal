@@ -35,7 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('exercises', ExerciseController::class);
 
     // Protocol Management
-    // Note: Assign routes must be defined BEFORE the resource to avoid 404s
     Route::get('/protocols/{protocol}/assign', [ProtocolController::class, 'assign'])->name('protocols.assign');
     Route::post('/protocols/{protocol}/assign', [ProtocolController::class, 'processAssignment'])->name('protocols.processAssignment');
     Route::put('/protocols/{protocol}/patient/{patient}', [ProtocolController::class, 'updatePatientAssignment'])->name('protocols.updatePatientAssignment');
