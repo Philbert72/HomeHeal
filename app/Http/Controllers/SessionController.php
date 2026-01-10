@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 class SessionController extends Controller
 {
@@ -45,10 +46,6 @@ class SessionController extends Controller
         $this->authorize('create', DailySessionLog::class);
 
         $user = Auth::user();
-
-        if ($user->role !== 'patient') {
-            abort(403, 'Unauthorized access. User is not a patient.');
-        }
         
         // Get all protocols assigned to this patient
         // Ensure the protocols() relationship is defined in User.php
@@ -86,38 +83,38 @@ class SessionController extends Controller
     {
         $this->authorize('create', DailySessionLog::class);
 
-        $validated = $request->validate([
-            'protocol_id' => 'required|exists:protocols,id',
-            'log_date' => 'required|date|before_or_equal:today',
-            'pain_score' => 'required|integer|min:0|max:10',
-            'difficulty_rating' => 'required|integer|min:1|max:5',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        $user = Auth::user();
-
-        // 1. Security Check: Verify patient is actually assigned to this protocol
-        $isAssigned = DB::table('protocol_user')
-            ->where('protocol_id', $validated['protocol_id'])
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (!$isAssigned) {
-            return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
-        }
-
-        // 2. Prevent Double Logging (Final safety check)
-        $alreadyLogged = DailySessionLog::where('patient_id', $user->id)
-            ->where('protocol_id', $validated['protocol_id'])
-            ->whereDate('log_date', $validated['log_date'])
-            ->exists();
-
-        if ($alreadyLogged) {
-            return redirect()->route('dashboard')->with('error', 'You have already logged a session for this protocol today.');
-        }
-
-        // 3. Save the log
         try {
+            $validated = $request->validate([
+                'protocol_id' => 'required|exists:protocols,id',
+                'log_date' => 'required|date|before_or_equal:today',
+                'pain_score' => 'required|integer|min:0|max:10',
+                'difficulty_rating' => 'required|integer|min:1|max:5',
+                'notes' => 'nullable|string|max:1000',
+            ]);
+    
+            $user = Auth::user();
+    
+            // 1. Security Check: Verify patient is actually assigned to this protocol
+            $isAssigned = DB::table('protocol_user')
+                ->where('protocol_id', $validated['protocol_id'])
+                ->where('user_id', $user->id)
+                ->exists();
+    
+            if (!$isAssigned) {
+                return back()->withErrors(['protocol_id' => 'You are not assigned to this protocol.']);
+            }
+    
+            // 2. Prevent Double Logging (Final safety check)
+            $alreadyLogged = DailySessionLog::where('patient_id', $user->id)
+                ->where('protocol_id', $validated['protocol_id'])
+                ->whereDate('log_date', $validated['log_date'])
+                ->exists();
+    
+            if ($alreadyLogged) {
+                return redirect()->route('dashboard')->with('error', 'You have already logged a session for this protocol today.');
+            }
+    
+            // 3. Save the log
             DailySessionLog::create([
                 'patient_id' => $user->id,
                 'protocol_id' => $validated['protocol_id'],
@@ -126,17 +123,13 @@ class SessionController extends Controller
                 'difficulty_rating' => $validated['difficulty_rating'],
                 'notes' => $validated['notes'],
             ]);
-        } catch (QueryException $e) {
-            // Check if the error is for a duplicate entry
-            $errorCode = $e->errorInfo[1];
-            if ($errorCode == 23000 || $errorCode == 23505) { // Duplicate entry error codes for MySQL and PostgreSQL
-                return redirect()->route('dashboard')->with('error', 'You have already logged a session for this protocol today.');
-            }
-            // Re-throw the exception if it's not a duplicate entry error
-            throw $e;
-        }
+    
+            return redirect()->route('dashboard')->with('success', 'Session logged successfully!');
 
-        return redirect()->route('dashboard')->with('success', 'Session logged successfully!');
+        } catch (\Exception $e) {
+            Log::channel('stderr')->error('Error completing session: ' . $e->getMessage());
+            return redirect()->route('dashboard')->with('error', 'An unexpected error occurred while saving your session. Please try again.');
+        }
     }
 
     /**
