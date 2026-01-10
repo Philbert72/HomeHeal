@@ -149,7 +149,6 @@
 <script>
 function sessionForm() {
     return {
-        // We initialize using the protocol ID already saved in the session
         selectedProtocol: '{{ old('protocol_id', $session->protocol_id) }}',
     }
 }

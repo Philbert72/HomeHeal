@@ -112,7 +112,6 @@
 <script>
 function sessionForm() {
     return {
-        // FIX: Capture the initial protocol ID from PHP variables
         selectedProtocol: '{{ old('protocol_id', $selectedProtocolId ?? '') }}',
     }
 }

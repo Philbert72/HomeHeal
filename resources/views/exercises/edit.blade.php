@@ -31,7 +31,7 @@
                 >
             </div>
 
-            <!-- Video URL (Restored) -->
+            <!-- Video URL -->
             <div>
                 <label for="video_url" class="block text-sm font-semibold text-slate-900 dark:text-white mb-3">Video URL</label>
                 <input 

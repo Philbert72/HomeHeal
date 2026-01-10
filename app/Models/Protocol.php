@@ -31,6 +31,7 @@ class Protocol extends Model
     public function patients(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'protocol_user')
+                    ->withPivot('duration_days')
                     ->withTimestamps();
     }
 

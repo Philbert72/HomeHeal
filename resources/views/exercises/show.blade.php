@@ -13,7 +13,7 @@
     </div>
 
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-        <!-- Display Image (Checking URL first, then local path) -->
+        <!-- Display Image -->
         @if($exercise->image_url)
             <img src="{{ $exercise->image_url }}" alt="{{ $exercise->name }}" class="w-full h-80 object-cover border-b dark:border-slate-700">
         @elseif($exercise->image_path)

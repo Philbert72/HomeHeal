@@ -36,7 +36,7 @@ class ExerciseController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'instructions' => 'required|string',
-            'image_url' => 'nullable|url', // Vercel-friendly
+            'image_url' => 'nullable|url',
             'video_url' => 'nullable|url',
         ]);
 

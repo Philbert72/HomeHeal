@@ -72,4 +72,5 @@ class User extends Authenticatable
     {
         return $this->hasOne(DailySessionLog::class, 'patient_id')->latestOfMany('log_date');
     }
+
 }
